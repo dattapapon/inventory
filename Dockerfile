@@ -1,8 +1,14 @@
-FROM openjdk-11 AS build
-COPY . .
-RUN mvn clean package -DskipTests
+#
+# Build stage
+#
+FROM maven:3.6.0-jdk-11 AS build
+COPY . /home/app
+RUN mvn -f /home/app/pom.xml clean package
 
-FROM openjdk:11.0.3-jdk-slim
-COPY --from=build /target/flagship-1.0-SNAPSHOT.jar app.jar
+#
+# Package stage
+#
+FROM openjdk:11-jre
+COPY --from=build /home/app/target/flagship-1.0-SNAPSHOT.jar /usr/local/lib/flagship-1.0-SNAPSHOT.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-jar","/usr/local/lib/flagship-1.0-SNAPSHOT.jar"]
