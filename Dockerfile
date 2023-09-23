@@ -10,5 +10,5 @@ RUN mvn -f /home/app/pom.xml clean package
 #
 FROM openjdk:11-jre
 COPY --from=build /home/app/target/flagship-1.0-SNAPSHOT.jar /usr/local/lib/flagship-1.0-SNAPSHOT.jar
-EXPOSE 8080
+EXPOSE 8084
 ENTRYPOINT ["java","-jar","/usr/local/lib/flagship-1.0-SNAPSHOT.jar"]
