@@ -13,7 +13,7 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf().disable().authorizeHttpRequests()
+        httpSecurity.csrf().disable().authorizeRequests()
                 .antMatchers("/auth/**", "/user/**", "/product/**", "/wastage/**",
                         "/customer/**", "/salesPerson/**", "/swagger-ui/**", "/order/**", "/v3/api-docs/**")
                 .permitAll()
