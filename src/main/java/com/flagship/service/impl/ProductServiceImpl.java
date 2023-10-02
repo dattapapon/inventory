@@ -10,10 +10,10 @@ import com.flagship.model.db.Cutting;
 import com.flagship.model.db.Import;
 import com.flagship.model.db.Product;
 import com.flagship.model.db.User;
-import com.flagship.repository.ProductRepository;
-import com.flagship.repository.UserRepository;
 import com.flagship.repository.CuttingRepository;
 import com.flagship.repository.ImportRepository;
+import com.flagship.repository.ProductRepository;
+import com.flagship.repository.UserRepository;
 import com.flagship.service.ProductService;
 import com.flagship.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -30,6 +29,7 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final CuttingRepository cuttingRepository;
     private final ImportRepository importRepository;
+
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, UserRepository userRepository, CuttingRepository cuttingRepository,
                               ImportRepository importRepository) {
@@ -42,7 +42,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public CreateProductResponse createProduct(ProductRequest productRequest) {
         Boolean productExist = checkProduct(productRequest.getProductId());
-        if(productExist){
+        if (productExist) {
             throw new RequestValidationException("Product Id is exist. Give a valid Product Id");
         }
 
@@ -50,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
         product.setProductId(productRequest.getProductId());
         product.setProductName(productRequest.getProductName());
         Optional<User> user = userRepository.findByEmail(productRequest.getUserEmail());
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             throw new RequestValidationException("User Email did not exist");
         }
         product.setCreatedBy(user.get());
@@ -62,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
     public GetAllProductResponse getProduct() {
         List<Product> allProduct = productRepository.findAll();
         List<GetProductResponse> getProductRespons = new ArrayList<>();
-        for(Product product : allProduct){
+        for (Product product : allProduct) {
             getProductRespons.add(GetProductResponse.from(product));
         }
         return GetAllProductResponse.from(getProductRespons);
@@ -71,13 +71,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public AddImportResponse addImport(AddImportRequest addImportRequest) {
         List<AddCuttingRequest> cuttings = addImportRequest.getCartons();
-        List<GetCuttingResponse> getCuttingResponses = new ArrayList<>();
         Optional<User> user = userRepository.findByEmail(addImportRequest.getUserEmail());
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             throw new RequestValidationException("User Email did not exist");
         }
         Optional<User> receiver = userRepository.findById(addImportRequest.getReceiverName());
-        if(receiver.isEmpty()){
+        if (receiver.isEmpty()) {
             throw new RequestValidationException("User Email did not exist");
         }
         Import imports = new Import();
@@ -103,15 +102,19 @@ public class ProductServiceImpl implements ProductService {
         imports.setWarehouse(Warehouse.fromName(addImportRequest.getWarehouse().toString()));
         imports.setCreatedBy(user.get());
         Import saveImport = importRepository.save(imports);
-        getCuttingResponses = addCutting(cuttings, saveImport, user.get());
-        return AddImportResponse.from("Import Added Succesfully", imports, getCuttingResponses);
+        if (cuttings != null && !cuttings.isEmpty()) {
+            List<GetCuttingResponse> getCuttingResponses  = addCutting(cuttings, saveImport, user.get());
+            return AddImportResponse.from("Import Added Succesfully", imports, getCuttingResponses);
+        } else {
+            return AddImportResponse.from("Import Added Succesfully", imports, null);
+        }
     }
 
     @Override
     public GetAllImportResponse getSingleProduct(String productId) {
         List<Import> importList = importRepository.findAllByProductIdOrderByCreatedOnAsc(productId);
         List<GetImportResponse> importResponseList = new ArrayList<>();
-        for(Import imports : importList){
+        for (Import imports : importList) {
             importResponseList.add(GetImportResponse.from(imports));
         }
         return GetAllImportResponse.from(importResponseList);
@@ -121,7 +124,7 @@ public class ProductServiceImpl implements ProductService {
     public GetAllImportResponse getAllProduct() {
         List<Import> importList = importRepository.findAll();
         List<GetImportResponse> importResponseList = new ArrayList<>();
-        for(Import imports : importList){
+        for (Import imports : importList) {
             importResponseList.add(GetImportResponse.from(imports));
         }
         return GetAllImportResponse.from(importResponseList);
@@ -142,7 +145,7 @@ public class ProductServiceImpl implements ProductService {
 
     private List<GetCuttingResponse> addCutting(List<AddCuttingRequest> cuttings, Import imports, User user) {
         List<GetCuttingResponse> cuttingResponses = new ArrayList<>();
-        for(AddCuttingRequest addCuttingRequest : cuttings){
+        for (AddCuttingRequest addCuttingRequest : cuttings) {
             Cutting cutting = new Cutting();
             cutting.setCartoonNo(addCuttingRequest.getCartonNo());
             cutting.setCartoonWeight(addCuttingRequest.getCartonWeight());
@@ -150,7 +153,7 @@ public class ProductServiceImpl implements ProductService {
             cutting.setCartoonBuyingPrice(addCuttingRequest.getCartonBuyingPrice());
             cutting.setImportId(imports);
             cutting.setCreatedBy(user);
-            System.out.println(cutting.toString());
+            System.out.println(cutting);
             cuttingRepository.save(cutting);
             cuttingResponses.add(GetCuttingResponse.from(cutting));
         }
