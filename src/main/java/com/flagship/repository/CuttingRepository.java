@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface CuttingRepository extends PagingAndSortingRepository<Cutting, Long> {
     List<Cutting> findAllByImportIdOrderByCreatedOnDesc(Import cuttingId);
+    List<Cutting> findAll();
 }

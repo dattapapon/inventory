@@ -17,4 +17,6 @@ public interface ProductService {
     GetAllImportResponse getAllProduct();
 
     List<GetCuttingResponse> getCuttingDetails(Long cuttingId);
+
+    List<GetAllCuttingResponse> getAllCuttingDetails();
 }

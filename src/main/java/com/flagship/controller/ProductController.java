@@ -75,4 +75,13 @@ public class ProductController {
         List<GetCuttingResponse> getCuttingResponses = productService.getCuttingDetails(cuttingId);
         return new ResponseEntity<>(getCuttingResponses, HttpStatus.OK);
     }
+
+    @GetMapping(
+            value="/cutting/all",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<List<GetAllCuttingResponse>> getAllCuttingDetails() {
+        List<GetAllCuttingResponse> allCuttingResponse = productService.getAllCuttingDetails();
+        return new ResponseEntity<>(allCuttingResponse, HttpStatus.OK);
+    }
 }

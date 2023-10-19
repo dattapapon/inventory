@@ -14,5 +14,5 @@ public interface ImportRepository extends PagingAndSortingRepository<Import, Lon
 
     List<Import> findAll();
 
-    Optional<Import> findById(Long cuttingId);
+    Optional<Import> findById(Long importId);
 }

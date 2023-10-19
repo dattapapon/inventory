@@ -143,6 +143,18 @@ public class ProductServiceImpl implements ProductService {
         return cuttingResponses;
     }
 
+    @Override
+    public List<GetAllCuttingResponse> getAllCuttingDetails() {
+        List<Cutting> cuttingList = cuttingRepository.findAll();
+        List<GetAllCuttingResponse> getAllCuttingResponses = new ArrayList<>();
+        for(Cutting cutting : cuttingList){
+            Optional<Import> imports = importRepository.findById(cutting.getImportId().getId());
+            GetAllCuttingResponse getCuttingResponse = GetAllCuttingResponse.from(cutting, imports.get());
+            getAllCuttingResponses.add(getCuttingResponse);
+        }
+        return getAllCuttingResponses;
+    }
+
     private List<GetCuttingResponse> addCutting(List<AddCuttingRequest> cuttings, Import imports, User user) {
         List<GetCuttingResponse> cuttingResponses = new ArrayList<>();
         for (AddCuttingRequest addCuttingRequest : cuttings) {
