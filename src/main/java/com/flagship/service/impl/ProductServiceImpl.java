@@ -6,14 +6,8 @@ import com.flagship.dto.request.AddImportRequest;
 import com.flagship.dto.request.ProductRequest;
 import com.flagship.dto.response.*;
 import com.flagship.exception.RequestValidationException;
-import com.flagship.model.db.Cutting;
-import com.flagship.model.db.Import;
-import com.flagship.model.db.Product;
-import com.flagship.model.db.User;
-import com.flagship.repository.CuttingRepository;
-import com.flagship.repository.ImportRepository;
-import com.flagship.repository.ProductRepository;
-import com.flagship.repository.UserRepository;
+import com.flagship.model.db.*;
+import com.flagship.repository.*;
 import com.flagship.service.ProductService;
 import com.flagship.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +23,16 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final CuttingRepository cuttingRepository;
     private final ImportRepository importRepository;
+    private final OrderDetailsRepository orderDetailsRepository;
 
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, UserRepository userRepository, CuttingRepository cuttingRepository,
-                              ImportRepository importRepository) {
+                              ImportRepository importRepository, OrderDetailsRepository orderDetailsRepository) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.cuttingRepository = cuttingRepository;
         this.importRepository = importRepository;
+        this.orderDetailsRepository = orderDetailsRepository;
     }
 
     @Override
@@ -153,6 +149,39 @@ public class ProductServiceImpl implements ProductService {
             getAllCuttingResponses.add(getCuttingResponse);
         }
         return getAllCuttingResponses;
+    }
+
+    @Override
+    public List<RevenueResponse> getRevenueDetails() {
+        List<Product> products = productRepository.findAll();
+        List<RevenueResponse> revenueResponses = new ArrayList<>();
+        for(Product product : products){
+            List<Import> importsList = importRepository.findAllByProductIdOrderByCreatedOnAsc(product.getProductId());
+            double buyingPrice = 0.0;
+            long quantity = 0;
+            for(Import imports : importsList){
+                if(imports.getCartoonBuyingPrice() != null && buyingPrice < imports.getCartoonBuyingPrice()){
+                    buyingPrice = imports.getCartoonBuyingPrice();
+                }
+                quantity = quantity + imports.getCartoonQuantity();
+            }
+            Double totalBuyingPrice = quantity * buyingPrice;
+
+            List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByProductIdOrderByCreatedOnAsc(product.getProductId());
+            double sellingPrice = 0.0;
+            quantity = 0;
+            for(OrderDetails orderDetails : orderDetailsList){
+                if(orderDetails.getCartonSellingPrice() != null && buyingPrice > orderDetails.getCartonSellingPrice()){
+                    sellingPrice = orderDetails.getCartonSellingPrice();
+                }
+                quantity = quantity + orderDetails.getCartonQuantity();
+            }
+            Double totalSellingPrice = quantity * sellingPrice;
+            double revenue = totalSellingPrice - totalBuyingPrice;
+            RevenueResponse revenueResponse = RevenueResponse.from(product, buyingPrice, sellingPrice, totalBuyingPrice, totalSellingPrice, revenue);
+            revenueResponses.add(revenueResponse);
+        }
+        return revenueResponses;
     }
 
     private List<GetCuttingResponse> addCutting(List<AddCuttingRequest> cuttings, Import imports, User user) {

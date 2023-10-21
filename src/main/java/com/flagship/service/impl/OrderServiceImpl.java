@@ -6,6 +6,7 @@ import com.flagship.dto.request.OrderMasterRequest;
 import com.flagship.dto.response.AddOrderMasterResponse;
 import com.flagship.dto.response.GetOrderCuttingResponse;
 import com.flagship.dto.response.GetOrderDetailsResponse;
+import com.flagship.dto.response.OrderBillsResponse;
 import com.flagship.model.db.OrderCutting;
 import com.flagship.model.db.OrderDetails;
 import com.flagship.model.db.OrderMaster;
@@ -51,9 +52,26 @@ public class OrderServiceImpl implements OrderService {
         orderMaster.setCreditTerm(DateUtil.getZoneDateTime(orderMasterRequest.getCreditTerm() + "T00:00:00"));
         orderMaster.setOrderId(ZonedDateTime.now().toString());
         OrderMaster saveOrderMaster = orderMasterRepository.save(orderMaster);
-        System.out.println("Order Id: " + saveOrderMaster.getOrderId());
         List<GetOrderDetailsResponse> getOrderDetailsResponses = addOrderMaster(saveOrderMaster, orderDetailsRequestList);
         return AddOrderMasterResponse.from("Order create successfully", orderMaster, getOrderDetailsResponses);
+    }
+
+    @Override
+    public List<OrderBillsResponse> getAllBills() {
+        List<OrderBillsResponse> orderBillsResponses = new ArrayList<>();
+        List<OrderMaster> orderMasters = orderMasterRepository.findAll();
+        for(OrderMaster master : orderMasters){
+            List<OrderDetails> orderDetails = orderDetailsRepository.findAllByOrderId(master);
+            double bills = 0;
+            for(OrderDetails details : orderDetails){
+                if(details.getBill() != null){
+                    bills = bills + details.getBill();
+                }
+            }
+            OrderBillsResponse orderBillsResponse = OrderBillsResponse.from(master, bills);
+            orderBillsResponses.add(orderBillsResponse);
+        }
+        return orderBillsResponses;
     }
 
     private List<GetOrderDetailsResponse> addOrderMaster(OrderMaster saveOrderMaster, List<OrderDetailsRequest> orderDetailsRequestList) {

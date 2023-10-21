@@ -65,7 +65,7 @@ public class OrderDetails implements Serializable{
     private Double bill;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbOrderDetails.ORDER_ID, referencedColumnName = DbOrderMaster.ORDER_ID, nullable = false, updatable = false)
+    @JoinColumn(name = DbOrderDetails.ORDER_ID, referencedColumnName = DbOrderMaster.ID, nullable = false, updatable = false)
     private OrderMaster orderId;
 
     @ManyToOne(cascade = CascadeType.ALL)
