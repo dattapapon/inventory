@@ -10,4 +10,6 @@ public interface OrderService {
     AddOrderMasterResponse createOrder(OrderMasterRequest orderMasterRequest);
 
     List<OrderBillsResponse> getAllBills();
+
+    List<OrderBillsResponse> getAllBillsByTime(String start, String end);
 }

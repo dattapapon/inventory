@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
@@ -22,7 +23,7 @@ public class UserServiceImpl implements UserService {
     public List<GetAllUserResponse> getAllUser() {
         List<User> userList = userRepository.findAll();
         List<GetAllUserResponse> getAllUserResponses = new ArrayList<>();
-        for(User user : userList){
+        for (User user : userList) {
             getAllUserResponses.add(GetAllUserResponse.from(user));
         }
         return getAllUserResponses;

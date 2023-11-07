@@ -13,7 +13,7 @@ public class GetCustomerResponse {
     private String phoneNumber;
     private String email;
 
-    public static GetCustomerResponse from(Customer customer){
+    public static GetCustomerResponse from(Customer customer) {
         return GetCustomerResponse.builder()
                 .customerId(customer.getCustomerId())
                 .customerName(customer.getCustomerName())

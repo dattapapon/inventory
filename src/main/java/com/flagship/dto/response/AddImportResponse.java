@@ -1,17 +1,18 @@
 package com.flagship.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
-import org.apache.hc.core5.http.HttpStatus;
 import com.flagship.constant.enums.Category;
 import com.flagship.constant.enums.Warehouse;
 import com.flagship.model.db.Import;
+import lombok.Builder;
+import lombok.Data;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.util.List;
 
 @Data
 @Builder
 public class AddImportResponse {
+    List<GetCuttingResponse> getCuttingResponse;
     private Integer code;
     private String message;
     private String shipmentNo;
@@ -36,9 +37,8 @@ public class AddImportResponse {
     private String receiverName;
     private Category category;
     private String name;
-    List<GetCuttingResponse> getCuttingResponse;
 
-    public static AddImportResponse from(String message, Import imports, List<GetCuttingResponse> getCuttingResponse){
+    public static AddImportResponse from(String message, Import imports, List<GetCuttingResponse> getCuttingResponse) {
         return AddImportResponse.builder()
                 .code(HttpStatus.SC_OK)
                 .message(message)

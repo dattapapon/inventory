@@ -60,11 +60,31 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderBillsResponse> getAllBills() {
         List<OrderBillsResponse> orderBillsResponses = new ArrayList<>();
         List<OrderMaster> orderMasters = orderMasterRepository.findAll();
-        for(OrderMaster master : orderMasters){
+        for (OrderMaster master : orderMasters) {
             List<OrderDetails> orderDetails = orderDetailsRepository.findAllByOrderId(master);
             double bills = 0;
-            for(OrderDetails details : orderDetails){
-                if(details.getBill() != null){
+            for (OrderDetails details : orderDetails) {
+                if (details.getBill() != null) {
+                    bills = bills + details.getBill();
+                }
+            }
+            OrderBillsResponse orderBillsResponse = OrderBillsResponse.from(master, bills);
+            orderBillsResponses.add(orderBillsResponse);
+        }
+        return orderBillsResponses;
+    }
+
+    @Override
+    public List<OrderBillsResponse> getAllBillsByTime(String start, String end) {
+        List<OrderBillsResponse> orderBillsResponses = new ArrayList<>();
+        List<OrderMaster> orderMasters = orderMasterRepository.findAllByCreatedOnBetween(
+                DateUtil.getZoneDateTime(start + "T00:00:00"),
+                DateUtil.getZoneDateTime(end + "T00:00:00"));
+        for (OrderMaster master : orderMasters) {
+            List<OrderDetails> orderDetails = orderDetailsRepository.findAllByOrderId(master);
+            double bills = 0;
+            for (OrderDetails details : orderDetails) {
+                if (details.getBill() != null) {
                     bills = bills + details.getBill();
                 }
             }

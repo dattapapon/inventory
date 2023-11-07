@@ -1,15 +1,16 @@
 package com.flagship.dto.response;
 
-import com.flagship.dto.request.OrderDetailsRequest;
 import com.flagship.model.db.OrderMaster;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.hc.core5.http.HttpStatus;
 
 import java.util.List;
+
 @Data
 @Builder
 public class AddOrderMasterResponse {
+    List<GetOrderDetailsResponse> orders;
     private Integer code;
     private String message;
     private String salesPersonName;
@@ -22,7 +23,7 @@ public class AddOrderMasterResponse {
     private String orderDate;
     private String creditTerm;
     private String orderId;
-    List<GetOrderDetailsResponse> orders;
+
     public static AddOrderMasterResponse from(String message, OrderMaster orderMaster, List<GetOrderDetailsResponse> getOrderDetailsResponses) {
         return AddOrderMasterResponse.builder()
                 .code(HttpStatus.SC_OK)

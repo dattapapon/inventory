@@ -16,7 +16,7 @@ public class RevenueResponse {
     private Double revenue;
 
     public static RevenueResponse from(Product product, Double buyingPrice, Double sellingPrice,
-                                       Double totalBuyingPrice, Double totalSellingPrice, Double revenue){
+                                       Double totalBuyingPrice, Double totalSellingPrice, Double revenue) {
         return RevenueResponse.builder()
                 .productId(product.getProductId())
                 .productName(product.getProductName())

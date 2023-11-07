@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 @RequestMapping("/wastage")
 public class WastageController {
     private final WastageService wastageService;
+
     @Autowired
     public WastageController(WastageService wastageService) {
         this.wastageService = wastageService;
@@ -26,14 +27,15 @@ public class WastageController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<AddWastageResponse> addWastage(@Valid @NotNull @RequestBody WastageAddRequest wastageAddRequest){
+    public ResponseEntity<AddWastageResponse> addWastage(@Valid @NotNull @RequestBody WastageAddRequest wastageAddRequest) {
         AddWastageResponse addWastageResponse = wastageService.addWastage(wastageAddRequest);
         return new ResponseEntity<>(addWastageResponse, HttpStatus.OK);
     }
+
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<GetAllWastageResponse> getAllWastage(){
+    public ResponseEntity<GetAllWastageResponse> getAllWastage() {
         GetAllWastageResponse getAllWastageResponse = wastageService.getAllWastage();
         return new ResponseEntity<>(getAllWastageResponse, HttpStatus.OK);
     }
@@ -42,7 +44,7 @@ public class WastageController {
             value = "/period",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<GetAllWastageResponse> getAllWastageByPeriod(@RequestParam(name = "Period") String period){
+    public ResponseEntity<GetAllWastageResponse> getAllWastageByPeriod(@RequestParam(name = "Period") String period) {
         GetAllWastageResponse getAllWastageResponse = wastageService.getAllWastageByPeriod(period);
         return new ResponseEntity<>(getAllWastageResponse, HttpStatus.OK);
     }

@@ -18,6 +18,7 @@ import java.util.List;
 @RequestMapping("/order")
 public class OrderController {
     private final OrderService orderService;
+
     @Autowired
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
@@ -28,7 +29,7 @@ public class OrderController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
 
-    private ResponseEntity<AddOrderMasterResponse> addOrder(@Valid @NotNull @RequestBody OrderMasterRequest orderMasterRequest){
+    private ResponseEntity<AddOrderMasterResponse> addOrder(@Valid @NotNull @RequestBody OrderMasterRequest orderMasterRequest) {
         AddOrderMasterResponse orderMasterResponse = orderService.createOrder(orderMasterRequest);
         return new ResponseEntity<>(orderMasterResponse, HttpStatus.OK);
     }
@@ -37,8 +38,19 @@ public class OrderController {
             produces = MediaType.APPLICATION_JSON_VALUE
     )
 
-    private ResponseEntity<List<OrderBillsResponse>> getAllBills(){
+    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
         List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
+        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/time",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+
+    private ResponseEntity<List<OrderBillsResponse>> getAllBillsByTime(@RequestParam(value = "start") String start,
+                                                                       @RequestParam(value = "end") String end) {
+        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBillsByTime(start, end);
         return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
     }
 }

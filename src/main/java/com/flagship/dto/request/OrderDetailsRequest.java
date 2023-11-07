@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class OrderDetailsRequest {
+    List<OrderCuttingRequest> cutting;
     private String productId;
     private String productName;
     private Long cartonQuantity;
@@ -19,5 +20,4 @@ public class OrderDetailsRequest {
     private Double tax;
     private Double vat;
     private Boolean cuttings;
-    List<OrderCuttingRequest> cutting;
 }

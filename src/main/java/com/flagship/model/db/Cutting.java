@@ -1,9 +1,9 @@
 package com.flagship.model.db;
 
-import lombok.*;
 import com.flagship.constant.db.DbConstant.DbCutting;
 import com.flagship.constant.db.DbConstant.DbImport;
 import com.flagship.constant.db.DbConstant.DbUser;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 

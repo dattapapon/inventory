@@ -11,6 +11,7 @@ public class GetOrderCuttingResponse {
     private Double cartonQuantity;
     private Long pieceInCarton;
     private Double price;
+
     public static GetOrderCuttingResponse from(OrderCutting orderCutting) {
         return GetOrderCuttingResponse.builder()
                 .cartonNo(orderCutting.getCartonNo())

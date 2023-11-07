@@ -1,7 +1,6 @@
 package com.flagship.service.impl;
 
 import com.flagship.dto.request.CreateCustomerRequest;
-import com.flagship.dto.request.CreateSalesPersonRequest;
 import com.flagship.dto.response.CreateCustomerResponse;
 import com.flagship.dto.response.GetAllCustomerResponse;
 import com.flagship.dto.response.GetCustomerResponse;
@@ -31,11 +30,11 @@ public class CustomerServiceImpl implements CustomerService {
     public CreateCustomerResponse addCustomer(CreateCustomerRequest createCustomerRequest) {
         createCustomerRequest.validate();
         Boolean checkCustomerExist = customerExist(createCustomerRequest.getCustomerId());
-        if(checkCustomerExist){
-            throw  new RequestValidationException("Customer id is exist");
+        if (checkCustomerExist) {
+            throw new RequestValidationException("Customer id is exist");
         }
         Optional<User> user = userRepository.findByEmail(createCustomerRequest.getUserEmail());
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             throw new RequestValidationException("User not exist");
         }
         Customer customer = new Customer();
@@ -53,7 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
     public GetAllCustomerResponse getAllCustomer() {
         List<Customer> customerList = customerRepository.findAll();
         List<GetCustomerResponse> getCustomerResponses = new ArrayList<>();
-        for(Customer customer : customerList){
+        for (Customer customer : customerList) {
             getCustomerResponses.add(GetCustomerResponse.from(customer));
         }
         return GetAllCustomerResponse.from(getCustomerResponses);
@@ -62,7 +61,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public GetCustomerResponse getCustomer(String customerId) {
         Optional<Customer> customer = customerRepository.findByCustomerId(customerId);
-        if(customer.isEmpty()){
+        if (customer.isEmpty()) {
             throw new RequestValidationException("Customer is not exist");
         }
         return GetCustomerResponse.from(customer.get());

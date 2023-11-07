@@ -1,6 +1,5 @@
 package com.flagship.model.db;
 
-import com.flagship.constant.db.DbConstant;
 import com.flagship.constant.db.DbConstant.DbSalesPerson;
 import com.flagship.constant.db.DbConstant.DbUser;
 import lombok.*;

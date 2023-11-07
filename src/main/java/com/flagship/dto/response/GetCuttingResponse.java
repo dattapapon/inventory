@@ -12,7 +12,7 @@ public class GetCuttingResponse {
     private Long pieceInCarton;
     private Double cartonBuyingPrice;
 
-    public static GetCuttingResponse from(Cutting cutting){
+    public static GetCuttingResponse from(Cutting cutting) {
         return GetCuttingResponse.builder()
                 .cartonNo(cutting.getCartoonNo())
                 .cartonWeight(cutting.getCartoonWeight())

@@ -1,6 +1,7 @@
 package com.flagship.controller;
 
 import com.flagship.dto.request.AddImportRequest;
+import com.flagship.dto.request.MoveProductRequest;
 import com.flagship.dto.request.ProductRequest;
 import com.flagship.dto.response.*;
 import com.flagship.service.ProductService;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequestMapping("/product")
 public class ProductController {
     private final ProductService productService;
+
     @Autowired
     public ProductController(ProductService productService) {
         this.productService = productService;
@@ -41,6 +43,7 @@ public class ProductController {
         AddImportResponse response = productService.addImport(addImportRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
@@ -50,7 +53,7 @@ public class ProductController {
     }
 
     @GetMapping(
-            value="/productId",
+            value = "/productId",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<GetAllImportResponse> getSingleProduct(@RequestParam(value = "productId") String productId) {
@@ -59,7 +62,19 @@ public class ProductController {
     }
 
     @GetMapping(
-            value="/all",
+            value = "/time",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<GetAllImportResponse> getAllProductByTime(@RequestParam(name = "productId", required = false) String productId,
+                                                                    @RequestParam(name = "warhouse", required = false) String warhouse,
+                                                                    @RequestParam(name = "start", required = false) String start,
+                                                                    @RequestParam(name = "end", required = false) String end) {
+        GetAllImportResponse getImportResponseList = productService.getAllProductByTime(productId, warhouse, start, end);
+        return new ResponseEntity<>(getImportResponseList, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/all",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<GetAllImportResponse> getAllProduct() {
@@ -68,7 +83,7 @@ public class ProductController {
     }
 
     @GetMapping(
-            value="/cutting",
+            value = "/cutting",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<List<GetCuttingResponse>> getCuttingDetails(@RequestParam(value = "cuttingId") Long cuttingId) {
@@ -77,7 +92,38 @@ public class ProductController {
     }
 
     @GetMapping(
-            value="/cutting/all",
+            value = "/cutting/time",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<List<GetAllCuttingResponse>> getAllCuttingDetailsByTime(@RequestParam(value = "productId", required = false) String productId,
+                                                                                  @RequestParam(value = "warhouse", required = false) String warhouse,
+                                                                                  @RequestParam(value = "start") String start,
+                                                                                  @RequestParam(value = "end") String end) {
+        List<GetAllCuttingResponse> allCuttingResponse = productService.getAllCuttingDetailsByTime(productId, warhouse, start, end);
+        return new ResponseEntity<>(allCuttingResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/revenue",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<List<RevenueResponse>> getRevenueDetails() {
+        List<RevenueResponse> revenueResponses = productService.getRevenueDetails();
+        return new ResponseEntity<>(revenueResponses, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/revenue/time",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<List<RevenueResponse>> getRevenueDetailsByTime(@RequestParam(value = "start") String start,
+                                                                         @RequestParam(value = "end") String end) {
+        List<RevenueResponse> revenueResponses = productService.getRevenueDetailsByTime(start, end);
+        return new ResponseEntity<>(revenueResponses, HttpStatus.OK);
+    }
+
+    @GetMapping(
+            value = "/cutting/all",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<List<GetAllCuttingResponse>> getAllCuttingDetails() {
@@ -85,12 +131,13 @@ public class ProductController {
         return new ResponseEntity<>(allCuttingResponse, HttpStatus.OK);
     }
 
-    @GetMapping(
-            value="/revenue",
+    @PostMapping(
+            value = "/move",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<List<RevenueResponse>> getRevenueDetails() {
-        List<RevenueResponse> revenueResponses = productService.getRevenueDetails();
-        return new ResponseEntity<>(revenueResponses, HttpStatus.OK);
+    public ResponseEntity<SuccessResponse> moveProduct(@Valid @NotNull @RequestBody MoveProductRequest moveProductRequest) {
+        SuccessResponse response = productService.moveProduct(moveProductRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

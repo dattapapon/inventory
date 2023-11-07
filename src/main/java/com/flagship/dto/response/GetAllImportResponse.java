@@ -10,7 +10,7 @@ import java.util.List;
 public class GetAllImportResponse {
     List<GetImportResponse> getImportResponseList;
 
-    public static GetAllImportResponse from(List<GetImportResponse> importResponses){
+    public static GetAllImportResponse from(List<GetImportResponse> importResponses) {
         return GetAllImportResponse.builder()
                 .getImportResponseList(importResponses)
                 .build();

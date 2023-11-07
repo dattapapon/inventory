@@ -21,6 +21,7 @@ import java.util.Optional;
 public class SalesPersonServiceImpl implements SalesPersonService {
     private final SalesPersonRepository salesPersonRepository;
     private final UserRepository userRepository;
+
     @Autowired
     public SalesPersonServiceImpl(SalesPersonRepository salesPersonRepository, UserRepository userRepository) {
         this.salesPersonRepository = salesPersonRepository;
@@ -31,11 +32,11 @@ public class SalesPersonServiceImpl implements SalesPersonService {
     public CreateSalesPersonResponse addSalesPerson(CreateSalesPersonRequest createSalesPersonRequest) {
         createSalesPersonRequest.validate();
         Boolean checkSalesPersonExist = salesPersonExist(createSalesPersonRequest.getSalesPersonId());
-        if(checkSalesPersonExist){
-            throw  new RequestValidationException("Sales Person id is exist");
+        if (checkSalesPersonExist) {
+            throw new RequestValidationException("Sales Person id is exist");
         }
         Optional<User> user = userRepository.findByEmail(createSalesPersonRequest.getUserEmail());
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             throw new RequestValidationException("User not exist");
         }
         SalesPerson salesPerson = new SalesPerson();
@@ -52,7 +53,7 @@ public class SalesPersonServiceImpl implements SalesPersonService {
     public GetAllSalesPersonResponse getAllSalesPerson() {
         List<SalesPerson> salesPersonList = salesPersonRepository.findAll();
         List<GetSalesPersonResponse> getSalesPersonResponses = new ArrayList<>();
-        for(SalesPerson salesPerson : salesPersonList){
+        for (SalesPerson salesPerson : salesPersonList) {
             getSalesPersonResponses.add(GetSalesPersonResponse.from(salesPerson));
         }
         return GetAllSalesPersonResponse.from(getSalesPersonResponses);
@@ -61,7 +62,7 @@ public class SalesPersonServiceImpl implements SalesPersonService {
     @Override
     public GetSalesPersonResponse getSalesPerson(String salesPersonId) {
         Optional<SalesPerson> salesPerson = salesPersonRepository.findBySalesPersonId(salesPersonId);
-        if(salesPerson.isEmpty()){
+        if (salesPerson.isEmpty()) {
             throw new RequestValidationException("Sales Person is not exist");
         }
         return GetSalesPersonResponse.from(salesPerson.get());

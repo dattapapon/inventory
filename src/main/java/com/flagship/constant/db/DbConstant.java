@@ -12,6 +12,7 @@ public class DbConstant {
         public static final String LAST_UPDATED_ON = "last_updated_on";
 
         public static final String ID = "id";
+
         DbCommon() {
         }
     }

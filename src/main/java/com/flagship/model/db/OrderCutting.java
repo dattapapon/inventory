@@ -1,8 +1,8 @@
 package com.flagship.model.db;
 
+import com.flagship.constant.db.DbConstant.DbOrderCutting;
 import com.flagship.constant.db.DbConstant.DbOrderMaster;
 import com.flagship.constant.db.DbConstant.DbUser;
-import com.flagship.constant.db.DbConstant.DbOrderCutting;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,7 +18,7 @@ import java.time.ZonedDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = DbOrderCutting.TABLE_NAME)
-public class OrderCutting implements Serializable{
+public class OrderCutting implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = DbOrderCutting.ID)

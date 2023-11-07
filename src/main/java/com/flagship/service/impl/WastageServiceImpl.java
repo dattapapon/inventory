@@ -2,8 +2,8 @@ package com.flagship.service.impl;
 
 import com.flagship.constant.enums.Cause;
 import com.flagship.dto.request.WastageAddRequest;
-import com.flagship.dto.response.GetAllWastageResponse;
 import com.flagship.dto.response.AddWastageResponse;
+import com.flagship.dto.response.GetAllWastageResponse;
 import com.flagship.dto.response.GetWastageResponse;
 import com.flagship.exception.RequestValidationException;
 import com.flagship.model.db.User;
@@ -24,6 +24,7 @@ import java.util.Optional;
 public class WastageServiceImpl implements WastageService {
     private final WastageRepository wastageRepository;
     private final UserRepository userRepository;
+
     @Autowired
     public WastageServiceImpl(WastageRepository wastageRepository, UserRepository userRepository) {
         this.wastageRepository = wastageRepository;
@@ -34,7 +35,7 @@ public class WastageServiceImpl implements WastageService {
     public AddWastageResponse addWastage(WastageAddRequest wastageAddRequest) {
         Wastage wastage = new Wastage();
         Optional<User> user = userRepository.findByEmail(wastageAddRequest.getUserEmail());
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             throw new RequestValidationException("User not exist");
         }
         wastage.setProductId(wastageAddRequest.getProductId());
@@ -52,7 +53,7 @@ public class WastageServiceImpl implements WastageService {
     public GetAllWastageResponse getAllWastage() {
         List<Wastage> wastageList = wastageRepository.findAll();
         List<GetWastageResponse> getWastageResponseList = new ArrayList<>();
-        for(Wastage wastage : wastageList){
+        for (Wastage wastage : wastageList) {
             getWastageResponseList.add(GetWastageResponse.from(wastage));
         }
         return GetAllWastageResponse.from(getWastageResponseList);

@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 public class GetAllProductResponse {
     List<GetProductResponse> getAllProductResponse;
+
     public static GetAllProductResponse from(List<GetProductResponse> allProduct) {
         return GetAllProductResponse.builder()
                 .getAllProductResponse(allProduct)

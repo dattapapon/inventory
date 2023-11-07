@@ -2,7 +2,6 @@ package com.flagship.dto.response;
 
 import com.flagship.model.db.Cutting;
 import com.flagship.model.db.Import;
-import com.flagship.model.db.Product;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,7 +15,7 @@ public class GetAllCuttingResponse {
     private Double cartonWeight;
     private Long cartonPiece;
 
-    public static GetAllCuttingResponse from(Cutting cutting, Import imports){
+    public static GetAllCuttingResponse from(Cutting cutting, Import imports) {
         return GetAllCuttingResponse.builder()
                 .importId(cutting.getImportId().getId())
                 .productId(imports.getProductId())

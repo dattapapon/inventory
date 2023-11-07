@@ -16,7 +16,7 @@ public class CreateCustomerResponse {
     private String phoneNumber;
     private String email;
 
-    public static CreateCustomerResponse from(String message, Customer customer){
+    public static CreateCustomerResponse from(String message, Customer customer) {
         return CreateCustomerResponse.builder()
                 .code(HttpStatus.SC_OK)
                 .message(message)

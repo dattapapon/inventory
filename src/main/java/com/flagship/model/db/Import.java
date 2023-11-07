@@ -1,10 +1,10 @@
 package com.flagship.model.db;
 
-import lombok.*;
-import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.db.DbConstant.DbImport;
+import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.enums.Category;
 import com.flagship.constant.enums.Warehouse;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 

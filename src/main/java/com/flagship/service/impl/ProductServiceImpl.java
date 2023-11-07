@@ -3,6 +3,7 @@ package com.flagship.service.impl;
 import com.flagship.constant.enums.Warehouse;
 import com.flagship.dto.request.AddCuttingRequest;
 import com.flagship.dto.request.AddImportRequest;
+import com.flagship.dto.request.MoveProductRequest;
 import com.flagship.dto.request.ProductRequest;
 import com.flagship.dto.response.*;
 import com.flagship.exception.RequestValidationException;
@@ -99,7 +100,7 @@ public class ProductServiceImpl implements ProductService {
         imports.setCreatedBy(user.get());
         Import saveImport = importRepository.save(imports);
         if (cuttings != null && !cuttings.isEmpty()) {
-            List<GetCuttingResponse> getCuttingResponses  = addCutting(cuttings, saveImport, user.get());
+            List<GetCuttingResponse> getCuttingResponses = addCutting(cuttings, saveImport, user.get());
             return AddImportResponse.from("Import Added Succesfully", imports, getCuttingResponses);
         } else {
             return AddImportResponse.from("Import Added Succesfully", imports, null);
@@ -118,7 +119,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public GetAllImportResponse getAllProduct() {
-        List<Import> importList = importRepository.findAll();
+        List<Import> importList;
+        importList = importRepository.findAll();
         List<GetImportResponse> importResponseList = new ArrayList<>();
         for (Import imports : importList) {
             importResponseList.add(GetImportResponse.from(imports));
@@ -143,7 +145,7 @@ public class ProductServiceImpl implements ProductService {
     public List<GetAllCuttingResponse> getAllCuttingDetails() {
         List<Cutting> cuttingList = cuttingRepository.findAll();
         List<GetAllCuttingResponse> getAllCuttingResponses = new ArrayList<>();
-        for(Cutting cutting : cuttingList){
+        for (Cutting cutting : cuttingList) {
             Optional<Import> imports = importRepository.findById(cutting.getImportId().getId());
             GetAllCuttingResponse getCuttingResponse = GetAllCuttingResponse.from(cutting, imports.get());
             getAllCuttingResponses.add(getCuttingResponse);
@@ -155,12 +157,12 @@ public class ProductServiceImpl implements ProductService {
     public List<RevenueResponse> getRevenueDetails() {
         List<Product> products = productRepository.findAll();
         List<RevenueResponse> revenueResponses = new ArrayList<>();
-        for(Product product : products){
+        for (Product product : products) {
             List<Import> importsList = importRepository.findAllByProductIdOrderByCreatedOnAsc(product.getProductId());
             double buyingPrice = 0.0;
             long quantity = 0;
-            for(Import imports : importsList){
-                if(imports.getCartoonBuyingPrice() != null && buyingPrice < imports.getCartoonBuyingPrice()){
+            for (Import imports : importsList) {
+                if (imports.getCartoonBuyingPrice() != null && buyingPrice < imports.getCartoonBuyingPrice()) {
                     buyingPrice = imports.getCartoonBuyingPrice();
                 }
                 quantity = quantity + imports.getCartoonQuantity();
@@ -170,8 +172,8 @@ public class ProductServiceImpl implements ProductService {
             List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByProductIdOrderByCreatedOnAsc(product.getProductId());
             double sellingPrice = 0.0;
             quantity = 0;
-            for(OrderDetails orderDetails : orderDetailsList){
-                if(orderDetails.getCartonSellingPrice() != null && buyingPrice > orderDetails.getCartonSellingPrice()){
+            for (OrderDetails orderDetails : orderDetailsList) {
+                if (orderDetails.getCartonSellingPrice() != null && buyingPrice > orderDetails.getCartonSellingPrice()) {
                     sellingPrice = orderDetails.getCartonSellingPrice();
                 }
                 quantity = quantity + orderDetails.getCartonQuantity();
@@ -182,6 +184,96 @@ public class ProductServiceImpl implements ProductService {
             revenueResponses.add(revenueResponse);
         }
         return revenueResponses;
+    }
+
+    @Override
+    public GetAllImportResponse getAllProductByTime(String productId, String warhouse, String start, String end) {
+        System.out.println(start);
+        if (start != null && end != null && start.compareTo(end) > 0) {
+            throw new RequestValidationException("Start time should be less than end time");
+        }
+        List<Import> importList = null;
+        if (productId == null && warhouse == null) {
+            importList = importRepository.findAllByCreatedOnBetween(DateUtil.getZoneDateTime(start + "T00:00:00"),
+                    DateUtil.getZoneDateTime(end + "T00:00:00"));
+        } else if (productId == null) {
+            importList = importRepository.findAllByWarehouseAndCreatedOnBetween(Warehouse.fromName(warhouse),
+                    DateUtil.getZoneDateTime(start + "T00:00:00"), DateUtil.getZoneDateTime(end + "T00:00:00"));
+        } else if (warhouse == null) {
+            importList = importRepository.findAllByProductIdAndCreatedOnBetween(productId, DateUtil.getZoneDateTime(start + "T00:00:00"),
+                    DateUtil.getZoneDateTime(end + "T00:00:00"));
+        } else {
+            importList = importRepository.findAllByProductIdAndWarehouseAndCreatedOnBetween(productId, Warehouse.fromName(warhouse),
+                    DateUtil.getZoneDateTime(start + "T00:00:00"), DateUtil.getZoneDateTime(end + "T00:00:00"));
+        }
+        List<GetImportResponse> importResponseList = new ArrayList<>();
+        assert importList != null;
+        for (Import imports : importList) {
+            importResponseList.add(GetImportResponse.from(imports));
+        }
+        return GetAllImportResponse.from(importResponseList);
+    }
+
+    @Override
+    public List<GetAllCuttingResponse> getAllCuttingDetailsByTime(String productId, String warhouse, String start, String end) {
+        System.out.println(start);
+        if (start != null && end != null && start.compareTo(end) > 0) {
+            throw new RequestValidationException("Start time should be less than end time");
+        }
+        List<Cutting> cuttingList;
+        cuttingList = cuttingRepository.findAllByCreatedOnBetween(DateUtil.getZoneDateTime(start + "T00:00:00"),
+                DateUtil.getZoneDateTime(end + "T00:00:00"));
+        List<GetAllCuttingResponse> getAllCuttingResponses = new ArrayList<>();
+        for (Cutting cutting : cuttingList) {
+            Optional<Import> imports = importRepository.findById(cutting.getImportId().getId());
+            GetAllCuttingResponse getCuttingResponse = GetAllCuttingResponse.from(cutting, imports.get());
+            getAllCuttingResponses.add(getCuttingResponse);
+        }
+        return getAllCuttingResponses;
+    }
+
+    @Override
+    public List<RevenueResponse> getRevenueDetailsByTime(String start, String end) {
+        if (start != null && end != null && start.compareTo(end) > 0) {
+            throw new RequestValidationException("Start time should be less than end time");
+        }
+        List<Product> products = productRepository.findAll();
+        List<RevenueResponse> revenueResponses = new ArrayList<>();
+        for (Product product : products) {
+            List<Import> importsList = importRepository.findAllByProductIdAndCreatedOnBetween(product.getProductId(),
+                    DateUtil.getZoneDateTime(start + "T00:00:00"), DateUtil.getZoneDateTime(end + "T00:00:00"));
+            double buyingPrice = 0.0;
+            long quantity = 0;
+            for (Import imports : importsList) {
+                if (imports.getCartoonBuyingPrice() != null && buyingPrice < imports.getCartoonBuyingPrice()) {
+                    buyingPrice = imports.getCartoonBuyingPrice();
+                }
+                quantity = quantity + imports.getCartoonQuantity();
+            }
+            Double totalBuyingPrice = quantity * buyingPrice;
+
+            List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByProductIdAndCreatedOnBetween(product.getProductId(),
+                    DateUtil.getZoneDateTime(start + "T00:00:00"), DateUtil.getZoneDateTime(end + "T00:00:00"));
+            double sellingPrice = 0.0;
+            quantity = 0;
+            for (OrderDetails orderDetails : orderDetailsList) {
+                if (orderDetails.getCartonSellingPrice() != null && buyingPrice > orderDetails.getCartonSellingPrice()) {
+                    sellingPrice = orderDetails.getCartonSellingPrice();
+                }
+                quantity = quantity + orderDetails.getCartonQuantity();
+            }
+            Double totalSellingPrice = quantity * sellingPrice;
+            double revenue = totalSellingPrice - totalBuyingPrice;
+            RevenueResponse revenueResponse = RevenueResponse.from(product, buyingPrice, sellingPrice, totalBuyingPrice, totalSellingPrice, revenue);
+            revenueResponses.add(revenueResponse);
+        }
+        return revenueResponses;
+    }
+
+    @Override
+    public SuccessResponse moveProduct(MoveProductRequest moveProductRequest) {
+        moveProductRequest.validate();
+        return SuccessResponse.from("Product Move Successfully");
     }
 
     private List<GetCuttingResponse> addCutting(List<AddCuttingRequest> cuttings, Import imports, User user) {

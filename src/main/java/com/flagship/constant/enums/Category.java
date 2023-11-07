@@ -10,7 +10,7 @@ public enum Category {
     FISH(3),
     FRUITS(4),
     PACKET(5),
-            ;
+    ;
 
     private final int type;
 

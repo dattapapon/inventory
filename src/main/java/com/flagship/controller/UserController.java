@@ -16,6 +16,7 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
+
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
@@ -24,7 +25,7 @@ public class UserController {
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<List<GetAllUserResponse>> getAllUser(){
+    ResponseEntity<List<GetAllUserResponse>> getAllUser() {
         List<GetAllUserResponse> getAllUserResponses = userService.getAllUser();
         return new ResponseEntity<>(getAllUserResponses, HttpStatus.OK);
     }

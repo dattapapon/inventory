@@ -10,7 +10,7 @@ public class GetAllUserResponse {
     private Long userId;
     private String name;
 
-    public static GetAllUserResponse from(User user){
+    public static GetAllUserResponse from(User user) {
         return GetAllUserResponse.builder()
                 .userId(user.getId())
                 .name(user.getName())

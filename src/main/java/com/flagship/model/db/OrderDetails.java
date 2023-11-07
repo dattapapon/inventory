@@ -1,8 +1,8 @@
 package com.flagship.model.db;
 
+import com.flagship.constant.db.DbConstant.DbOrderDetails;
 import com.flagship.constant.db.DbConstant.DbOrderMaster;
 import com.flagship.constant.db.DbConstant.DbUser;
-import com.flagship.constant.db.DbConstant.DbOrderDetails;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,7 +10,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -19,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = DbOrderDetails.TABLE_NAME)
-public class OrderDetails implements Serializable{
+public class OrderDetails implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = DbOrderDetails.ID)

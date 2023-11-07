@@ -1,7 +1,7 @@
 package com.flagship.model.db;
 
-import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.db.DbConstant.DbProduct;
+import com.flagship.constant.db.DbConstant.DbUser;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 

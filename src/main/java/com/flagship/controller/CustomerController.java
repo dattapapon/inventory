@@ -19,6 +19,7 @@ import javax.validation.constraints.NotNull;
 @RequestMapping("/customer")
 public class CustomerController {
     private final CustomerService customerService;
+
     @Autowired
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
@@ -29,7 +30,7 @@ public class CustomerController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<CreateCustomerResponse> addCustomer(@Valid @NotEmpty @NotNull
-                                                                  @RequestBody CreateCustomerRequest createCustomerRequest){
+                                                              @RequestBody CreateCustomerRequest createCustomerRequest) {
         CreateCustomerResponse createCustomerResponse = customerService.addCustomer(createCustomerRequest);
         return new ResponseEntity<>(createCustomerResponse, HttpStatus.OK);
     }
@@ -37,7 +38,7 @@ public class CustomerController {
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<GetAllCustomerResponse> getAllCustomer(){
+    public ResponseEntity<GetAllCustomerResponse> getAllCustomer() {
         GetAllCustomerResponse getAllCustomer = customerService.getAllCustomer();
         return new ResponseEntity<>(getAllCustomer, HttpStatus.OK);
     }
@@ -46,7 +47,7 @@ public class CustomerController {
             value = "/customerId",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<GetCustomerResponse> getCustomer(@RequestParam(name = "customerId") String customerId){
+    public ResponseEntity<GetCustomerResponse> getCustomer(@RequestParam(name = "customerId") String customerId) {
         GetCustomerResponse getSingleCustomer = customerService.getCustomer(customerId);
         return new ResponseEntity<>(getSingleCustomer, HttpStatus.OK);
     }

@@ -16,7 +16,7 @@ public class OrderBillsResponse {
     private String companyName;
     private Double bills;
 
-    public static OrderBillsResponse from(OrderMaster orderMaster, Double bills){
+    public static OrderBillsResponse from(OrderMaster orderMaster, Double bills) {
         return OrderBillsResponse.builder()
                 .orderId(orderMaster.getOrderId())
                 .customerName(orderMaster.getCustomerName())

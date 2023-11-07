@@ -1,11 +1,12 @@
 package com.flagship.dto.request;
 
 import com.flagship.constant.enums.Cause;
-import lombok.Data;
 import com.flagship.dto.RequestValidator;
+import lombok.Data;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+
 @Data
 public class WastageAddRequest implements RequestValidator {
     @Valid

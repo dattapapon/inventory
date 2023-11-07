@@ -1,8 +1,8 @@
 package com.flagship.model.db;
 
-import lombok.*;
 import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.enums.Gender;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;

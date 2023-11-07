@@ -2,9 +2,9 @@ package com.flagship.dto.request;
 
 import com.flagship.constant.Regex;
 import com.flagship.constant.enums.Gender;
+import com.flagship.dto.RequestValidator;
 import com.flagship.exception.RequestValidationException;
 import lombok.Data;
-import com.flagship.dto.RequestValidator;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;

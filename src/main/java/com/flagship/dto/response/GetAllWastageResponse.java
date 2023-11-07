@@ -10,7 +10,7 @@ import java.util.List;
 public class GetAllWastageResponse {
     private List<GetWastageResponse> getWastageResponseList;
 
-    public static GetAllWastageResponse from(List<GetWastageResponse> getWastageResponseList){
+    public static GetAllWastageResponse from(List<GetWastageResponse> getWastageResponseList) {
         return GetAllWastageResponse.builder()
                 .getWastageResponseList(getWastageResponseList)
                 .build();

@@ -14,7 +14,7 @@ public class GetWastageResponse {
     private String importDate;
     private String cause;
 
-    public static GetWastageResponse from(Wastage wastage){
+    public static GetWastageResponse from(Wastage wastage) {
         return GetWastageResponse.builder()
                 .productId(wastage.getProductId())
                 .productName(wastage.getProductName())

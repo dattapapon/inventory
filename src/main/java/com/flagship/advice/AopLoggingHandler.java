@@ -16,8 +16,9 @@ import java.util.logging.Logger;
 @Component
 public class AopLoggingHandler {
 
-    private ObjectMapper mapper;
     private final Logger logger = Logger.getLogger("Flagship");
+    private ObjectMapper mapper;
+
     @PostConstruct
     private void postConstruct() {
         mapper = new ObjectMapper();
@@ -32,7 +33,7 @@ public class AopLoggingHandler {
         String methodName = joinPoint.getSignature().getName();
         String className = joinPoint.getTarget().getClass().toString();
 
-        try{
+        try {
             Object[] array = joinPoint.getArgs();
             logger.info(className + "." + methodName + "() :: " + mapper.writeValueAsString(array));
         } catch (Exception e) {

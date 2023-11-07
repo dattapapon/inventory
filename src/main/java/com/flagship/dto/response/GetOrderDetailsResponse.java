@@ -1,14 +1,15 @@
 package com.flagship.dto.response;
 
-import com.flagship.dto.request.OrderCuttingRequest;
 import com.flagship.model.db.OrderDetails;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+
 @Data
 @Builder
 public class GetOrderDetailsResponse {
+    List<GetOrderCuttingResponse> cutting;
     private String productId;
     private String productName;
     private Long cartonQuantity;
@@ -22,7 +23,7 @@ public class GetOrderDetailsResponse {
     private Double tax;
     private Double vat;
     private Double bill;
-    List<GetOrderCuttingResponse> cutting;
+
     public static GetOrderDetailsResponse from(OrderDetails orderDetails, List<GetOrderCuttingResponse> cuttingResponses) {
         return GetOrderDetailsResponse.builder()
                 .productId(orderDetails.getProductId())

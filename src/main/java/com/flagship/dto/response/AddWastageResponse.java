@@ -4,6 +4,7 @@ import com.flagship.model.db.Wastage;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.hc.core5.http.HttpStatus;
+
 @Data
 @Builder
 public class AddWastageResponse {
@@ -16,6 +17,7 @@ public class AddWastageResponse {
     private String importDate;
     private String cause;
     private String userEmail;
+
     public static AddWastageResponse from(String message, Wastage wastage) {
         return AddWastageResponse.builder()
                 .code(HttpStatus.SC_OK)

@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class OrderMasterRequest {
+    List<OrderDetailsRequest> orders;
     private String salesPersonName;
     private String supplierCode;
     private String customerName;
@@ -16,5 +17,4 @@ public class OrderMasterRequest {
     private String orderId;
     private String orderDate;
     private String creditTerm;
-    List<OrderDetailsRequest> orders;
 }

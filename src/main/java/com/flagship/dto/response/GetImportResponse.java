@@ -33,7 +33,7 @@ public class GetImportResponse {
     private Category category;
     private String name;
 
-    public static GetImportResponse from(Import imports){
+    public static GetImportResponse from(Import imports) {
         return GetImportResponse.builder()
                 .importId(imports.getId())
                 .shipmentNo(imports.getShipmentNo())
