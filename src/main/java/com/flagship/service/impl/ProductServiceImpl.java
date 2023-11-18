@@ -167,7 +167,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 quantity = quantity + imports.getCartoonQuantity();
             }
-            Double totalBuyingPrice = quantity * buyingPrice;
+            double totalBuyingPrice = (double) quantity * buyingPrice;
 
             List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByProductIdOrderByCreatedOnAsc(product.getProductId());
             double sellingPrice = 0.0;
@@ -178,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 quantity = quantity + orderDetails.getCartonQuantity();
             }
-            Double totalSellingPrice = quantity * sellingPrice;
+            double totalSellingPrice = (double) quantity * sellingPrice;
             double revenue = totalSellingPrice - totalBuyingPrice;
             RevenueResponse revenueResponse = RevenueResponse.from(product, buyingPrice, sellingPrice, totalBuyingPrice, totalSellingPrice, revenue);
             revenueResponses.add(revenueResponse);

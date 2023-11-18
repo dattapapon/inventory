@@ -53,10 +53,10 @@ public class ProductController {
     }
 
     @GetMapping(
-            value = "/productId",
+            value = "/id",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<GetAllImportResponse> getSingleProduct(@RequestParam(value = "productId") String productId) {
+    public ResponseEntity<GetAllImportResponse> getSingleProduct(@RequestParam(name = "productId") String productId) {
         GetAllImportResponse getImportResponseList = productService.getSingleProduct(productId);
         return new ResponseEntity<>(getImportResponseList, HttpStatus.OK);
     }

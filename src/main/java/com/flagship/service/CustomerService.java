@@ -8,7 +8,5 @@ import com.flagship.dto.response.GetCustomerResponse;
 public interface CustomerService {
     CreateCustomerResponse addCustomer(CreateCustomerRequest createCustomerRequest);
 
-    GetAllCustomerResponse getAllCustomer();
-
     GetCustomerResponse getCustomer(String customerId);
 }

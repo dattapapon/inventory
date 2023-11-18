@@ -14,9 +14,9 @@ public class OrderBillsResponse {
     private String phoneNumber;
     private String salesPerson;
     private String companyName;
-    private Double bills;
+    private double bills;
 
-    public static OrderBillsResponse from(OrderMaster orderMaster, Double bills) {
+    public static OrderBillsResponse from(OrderMaster orderMaster, double bills) {
         return OrderBillsResponse.builder()
                 .orderId(orderMaster.getOrderId())
                 .customerName(orderMaster.getCustomerName())

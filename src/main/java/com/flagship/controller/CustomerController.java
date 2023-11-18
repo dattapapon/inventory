@@ -36,14 +36,6 @@ public class CustomerController {
     }
 
     @GetMapping(
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<GetAllCustomerResponse> getAllCustomer() {
-        GetAllCustomerResponse getAllCustomer = customerService.getAllCustomer();
-        return new ResponseEntity<>(getAllCustomer, HttpStatus.OK);
-    }
-
-    @GetMapping(
             value = "/customerId",
             produces = MediaType.APPLICATION_JSON_VALUE
     )

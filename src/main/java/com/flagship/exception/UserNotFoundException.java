@@ -4,11 +4,9 @@ import lombok.Getter;
 
 @Getter
 public class UserNotFoundException extends RuntimeException {
-    private final Integer code;
 
-    public UserNotFoundException(Integer code, String message) {
+    public UserNotFoundException(String message) {
         super(message);
-        this.code = code;
     }
 
 }

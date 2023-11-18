@@ -4,10 +4,12 @@ import com.flagship.model.db.Cutting;
 import com.flagship.model.db.Import;
 import lombok.Builder;
 import lombok.Data;
+import org.apache.hc.core5.http.HttpStatus;
 
 @Data
 @Builder
 public class GetAllCuttingResponse {
+    private Integer code;
     private Long importId;
     private String productId;
     private String productName;
@@ -17,6 +19,7 @@ public class GetAllCuttingResponse {
 
     public static GetAllCuttingResponse from(Cutting cutting, Import imports) {
         return GetAllCuttingResponse.builder()
+                .code(HttpStatus.SC_OK)
                 .importId(cutting.getImportId().getId())
                 .productId(imports.getProductId())
                 .productName(imports.getProductName())

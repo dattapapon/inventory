@@ -1,6 +1,7 @@
 package com.flagship.controller;
 
 import com.flagship.dto.response.GetAllUserResponse;
+import com.flagship.dto.response.GetUsers;
 import com.flagship.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,8 @@ public class UserController {
     @GetMapping(
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ResponseEntity<List<GetAllUserResponse>> getAllUser() {
-        List<GetAllUserResponse> getAllUserResponses = userService.getAllUser();
+    ResponseEntity<GetUsers> getAllUser() {
+        GetUsers getAllUserResponses = userService.getAllUser();
         return new ResponseEntity<>(getAllUserResponses, HttpStatus.OK);
     }
 }

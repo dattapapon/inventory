@@ -6,6 +6,7 @@ import com.flagship.dto.request.SignUpRequest;
 import com.flagship.dto.response.LoginResponse;
 import com.flagship.dto.response.SignUpResponse;
 import com.flagship.exception.LoginException;
+import com.flagship.exception.PasswordException;
 import com.flagship.exception.UserExistException;
 import com.flagship.exception.UserNotFoundException;
 import com.flagship.model.db.User;
@@ -48,10 +49,10 @@ public class AuthServiceImpl implements AuthService {
         Optional<User> user = userRepository.findByEmail(loginRequest.getEmail());
         if (user.isPresent()) {
             if (!user.get().getPassword().equals(loginRequest.getPassword())) {
-                throw new LoginException("Password Not Match");
+                throw new PasswordException("Password Not Match");
             }
         } else {
-            throw new UserNotFoundException(HttpStatus.SC_NOT_FOUND, "User Name not Found");
+            throw new UserNotFoundException("User Name not Found");
         }
         return LoginResponse.from("Login Success", user.get().getName(), user.get().getEmail());
     }

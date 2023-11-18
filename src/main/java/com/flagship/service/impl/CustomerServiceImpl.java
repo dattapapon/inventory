@@ -47,17 +47,6 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.save(customer);
         return CreateCustomerResponse.from("Customer added Successfully", customer);
     }
-
-    @Override
-    public GetAllCustomerResponse getAllCustomer() {
-        List<Customer> customerList = customerRepository.findAll();
-        List<GetCustomerResponse> getCustomerResponses = new ArrayList<>();
-        for (Customer customer : customerList) {
-            getCustomerResponses.add(GetCustomerResponse.from(customer));
-        }
-        return GetAllCustomerResponse.from(getCustomerResponses);
-    }
-
     @Override
     public GetCustomerResponse getCustomer(String customerId) {
         Optional<Customer> customer = customerRepository.findByCustomerId(customerId);

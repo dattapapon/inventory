@@ -9,14 +9,14 @@ import lombok.Data;
 public class RevenueResponse {
     private String productId;
     private String productName;
-    private Double buyingPrice;
-    private Double totalBuyingPrice;
-    private Double sellingPrice;
-    private Double totalSellingPrice;
-    private Double revenue;
+    private double buyingPrice;
+    private double totalBuyingPrice;
+    private double sellingPrice;
+    private double totalSellingPrice;
+    private double revenue;
 
-    public static RevenueResponse from(Product product, Double buyingPrice, Double sellingPrice,
-                                       Double totalBuyingPrice, Double totalSellingPrice, Double revenue) {
+    public static RevenueResponse from(Product product, double buyingPrice, double sellingPrice,
+                                       double totalBuyingPrice, double totalSellingPrice, double revenue) {
         return RevenueResponse.builder()
                 .productId(product.getProductId())
                 .productName(product.getProductName())

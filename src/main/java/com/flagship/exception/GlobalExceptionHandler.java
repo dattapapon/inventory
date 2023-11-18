@@ -11,24 +11,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ErrorResponse handleUserNotFoundException(UserNotFoundException ex) {
 
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(ex.getMessage());
-        errorResponse.setCode(ex.getCode());
+        errorResponse.setCode(400);
         return errorResponse;
     }
 
     @ExceptionHandler(UserExistException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ErrorResponse handleUserExistException(UserExistException ex) {
 
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(ex.getMessage());
-        errorResponse.setCode(ex.getCode());
+        errorResponse.setCode(400);
         return errorResponse;
     }
 
@@ -38,6 +38,7 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleRequestValidationException(RequestValidationException ex) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setCode(400);
         return errorResponse;
     }
 
@@ -47,6 +48,7 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleLoginException(LoginException ex) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setCode(400);
         return errorResponse;
     }
 
@@ -56,6 +58,7 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleLoginException(PasswordException ex) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setCode(400);
         return errorResponse;
     }
 }
