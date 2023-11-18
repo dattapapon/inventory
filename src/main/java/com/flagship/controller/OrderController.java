@@ -34,14 +34,14 @@ public class OrderController {
         return new ResponseEntity<>(orderMasterResponse, HttpStatus.OK);
     }
 
-//    @GetMapping(
-//            produces = MediaType.APPLICATION_JSON_VALUE
-//    )
-//
-//    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
-//        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
-//        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
-//    }
+    @GetMapping(
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+
+    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
+        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
+        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
+    }
 
     @GetMapping(
             value = "/time",
@@ -54,13 +54,13 @@ public class OrderController {
         return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
     }
 
-    @GetMapping(
-            value = "/bills",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-
-    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
-        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
-        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
-    }
+//    @GetMapping(
+//            value = "/bills",
+//            produces = MediaType.APPLICATION_JSON_VALUE
+//    )
+//
+//    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
+//        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
+//        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
+//    }
 }
