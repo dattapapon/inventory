@@ -192,7 +192,7 @@ public class ProductServiceImpl implements ProductService {
         if (start != null && end != null && start.compareTo(end) > 0) {
             throw new RequestValidationException("Start time should be less than end time");
         }
-        List<Import> importList = null;
+        List<Import> importList;
         if (productId == null && warhouse == null) {
             importList = importRepository.findAllByCreatedOnBetween(DateUtil.getZoneDateTime(start + "T00:00:00"),
                     DateUtil.getZoneDateTime(end + "T00:00:00"));
@@ -250,7 +250,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 quantity = quantity + imports.getCartoonQuantity();
             }
-            Double totalBuyingPrice = quantity * buyingPrice;
+            double totalBuyingPrice = quantity * buyingPrice;
 
             List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByProductIdAndCreatedOnBetween(product.getProductId(),
                     DateUtil.getZoneDateTime(start + "T00:00:00"), DateUtil.getZoneDateTime(end + "T00:00:00"));
@@ -262,7 +262,7 @@ public class ProductServiceImpl implements ProductService {
                 }
                 quantity = quantity + orderDetails.getCartonQuantity();
             }
-            Double totalSellingPrice = quantity * sellingPrice;
+            double totalSellingPrice = quantity * sellingPrice;
             double revenue = totalSellingPrice - totalBuyingPrice;
             RevenueResponse revenueResponse = RevenueResponse.from(product, buyingPrice, sellingPrice, totalBuyingPrice, totalSellingPrice, revenue);
             revenueResponses.add(revenueResponse);
