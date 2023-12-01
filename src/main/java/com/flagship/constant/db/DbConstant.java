@@ -6,8 +6,8 @@ public class DbConstant {
     }
 
     public static class DbCommon {
-        public static final String CREATED_ON = "created_on";
         public static final String CREATED_BY = "created_by";
+        public static final String CREATED_ON = "created_on";
         public static final String LAST_UPDATED_BY = "last_updated_by";
         public static final String LAST_UPDATED_ON = "last_updated_on";
 
@@ -33,6 +33,24 @@ public class DbConstant {
         public static final String PRODUCT_NAME = "product_name";
     }
 
+    public static class DbCountry extends DbCommon {
+        public static final String TABLE_NAME = "country";
+        public static final String COUNTRY_ID = "country_id";
+        public static final String COUNTRY_NAME = "country_name";
+    }
+
+    public static class DbBrand extends DbCommon {
+        public static final String TABLE_NAME = "brand";
+        public static final String BRAND_ID = "brand_id";
+        public static final String BRAND_NAME = "brand_name";
+    }
+
+    public static class DbCategories extends DbCommon {
+        public static final String TABLE_NAME = "categories";
+        public static final String CATEGORY_ID = "category_id";
+        public static final String CATEGORY_NAME = "category_name";
+    }
+
     public static class DbWastage extends DbCommon {
         public static final String TABLE_NAME = "wastage";
         public static final String PRODUCT_ID = "product_id";
@@ -43,38 +61,29 @@ public class DbConstant {
         public static final String CAUSE = "cause";
     }
 
-    public static class DbImport extends DbCommon {
-        public static final String TABLE_NAME = "import";
-        public static final String IMPORT_ID = "import_id";
+    public static class DbImportDetails extends DbCommon {
+        public static final String TABLE_NAME = "import_details";
         public static final String SHIPMENT_NO = "shipment_no";
-        public static final String PRODUCT_ID = "product_id";
-        public static final String PRODUCT_NAME = "product_name";
-        public static final String CARTOON_QUANTITY = "cartoon_quantity";
-        public static final String CARTOON_BUYING_PRICE = "cartoon_buying_price";
-        public static final String CARTOON_WEIGHT = "cartoon_weight";
-        public static final String PIECE_QUANTITY = "piece_quantity";
-        public static final String PIECE_BUYING_PRICE = "piece_buying_price";
-        public static final String PIECE_WEIGHT = "piece_weight";
-        public static final String KG_LT_QUANTITY = "kg_lt_quantity";
-        public static final String KG_LT_BUYING_PRICE = "kg_lt_buying_price";
+        public static final String PRODUCT = "product";
+        public static final String CATEGORY = "category";
         public static final String BRAND = "brand";
         public static final String PRODUCTION = "production";
         public static final String COUNTRY = "country";
-        public static final String TAX = "tax";
-        public static final String VAT = "vat";
         public static final String WAREHOUSE = "warehouse";
         public static final String EXPIRE = "expire";
-        public static final String USER_ID = "receiver_name";
-        public static final String CATEGORY = "category";
+        public static final String CARTOON = "cartoon";
+        public static final String PIECE = "piece";
+        public static final String KG_LT = "kg_lt";
+        public static final String UOM = "uom";
+        public static final String UNIT_PRICE = "price";
+        public static final String TOTAL_PRICE = "total";
     }
 
-    public static class DbCutting extends DbCommon {
-        public static final String TABLE_NAME = "cutting";
-        public static final String CARTOON_NO = "cartoon_no";
-        public static final String CARTOON_WEIGHT = "cartoon_weight";
-        public static final String PIECE_IN_CARTOON = "piece_in_cartoon";
-        public static final String CARTOON_BUYING_PRICE = "cartoon_buying_price";
-        public static final String IMPORT_ID = "import_id";
+    public static class DbImportMaster extends DbCommon {
+        public static final String TABLE_NAME = "import_master";
+        public static final String SHIPMENT_NO = "shipment_no";
+        public static final String COUNTRY = "country";
+        public static final String DATE = "date";
     }
 
     public static class DbCustomer extends DbCommon {
@@ -85,6 +94,7 @@ public class DbConstant {
         public static final String CUSTOMER_NAME = "customer_name";
         public static final String COMPANY = "company";
         public static final String PHONE_NUMBER = "phone_number";
+        public static final String CUSTOMER_TYPE = "customer_type";
     }
 
     public static class DbSalesPerson extends DbCommon {
@@ -140,14 +150,13 @@ public class DbConstant {
         public static final String ORDER_ID = "order_id";
     }
 
-    public static class DbProductRecords extends DbCommon {
-        public static final String TABLE_NAME = "product_records";
-        public static final String PRODUCT_ID = "product_id";
-        public static final String CARTON_NO = "carton_no";
-        public static final String TOTAL_CARTON = "total_carton";
-        public static final String TOTAL_PIECE = "total_piece";
-        public static final String TOTAL_KG_LT = "total_kg_lt";
-        public static final String PRICE = "price";
+    public static class DbStock extends DbCommon {
+        public static final String TABLE_NAME = "stock";
+        public static final String PRODUCT = "product";
+        public static final String UOM = "uom";
+        public static final String TOTAL_BUY = "total";
+        public static final String TOTAL_SELL = "sell";
+        public static final String IN_STOCK = "inStock";
     }
 }
 

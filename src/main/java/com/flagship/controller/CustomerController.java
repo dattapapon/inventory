@@ -1,8 +1,7 @@
 package com.flagship.controller;
 
-import com.flagship.dto.request.CreateCustomerRequest;
-import com.flagship.dto.response.CreateCustomerResponse;
-import com.flagship.dto.response.GetAllCustomerResponse;
+import com.flagship.dto.request.CustomerRequest;
+import com.flagship.dto.response.CustomerResponse;
 import com.flagship.dto.response.GetCustomerResponse;
 import com.flagship.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +28,10 @@ public class CustomerController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<CreateCustomerResponse> addCustomer(@Valid @NotEmpty @NotNull
-                                                              @RequestBody CreateCustomerRequest createCustomerRequest) {
-        CreateCustomerResponse createCustomerResponse = customerService.addCustomer(createCustomerRequest);
-        return new ResponseEntity<>(createCustomerResponse, HttpStatus.OK);
+    public ResponseEntity<CustomerResponse> addCustomer(@Valid @NotEmpty @NotNull
+                                                              @RequestBody CustomerRequest customerRequest) {
+        CustomerResponse customerResponse = customerService.addCustomer(customerRequest);
+        return new ResponseEntity<>(customerResponse, HttpStatus.OK);
     }
 
     @GetMapping(

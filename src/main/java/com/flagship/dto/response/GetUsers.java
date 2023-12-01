@@ -12,7 +12,7 @@ public class GetUsers {
     private Integer code;
     private List<GetAllUserResponse> getAllUserResponseList;
 
-    public static GetUsers from(List<GetAllUserResponse> getAllUserResponseList){
+    public static GetUsers from(List<GetAllUserResponse> getAllUserResponseList) {
         return GetUsers.builder()
                 .code(HttpStatus.SC_OK)
                 .getAllUserResponseList(getAllUserResponseList)

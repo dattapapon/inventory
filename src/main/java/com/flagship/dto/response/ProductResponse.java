@@ -7,15 +7,15 @@ import org.apache.hc.core5.http.HttpStatus;
 
 @Builder
 @Data
-public class CreateProductResponse {
+public class ProductResponse {
     private Integer code;
     private String message;
     private String productId;
     private String productName;
     private String userEmail;
 
-    public static CreateProductResponse from(String message, Product product) {
-        return CreateProductResponse.builder()
+    public static ProductResponse from(String message, Product product) {
+        return ProductResponse.builder()
                 .code(HttpStatus.SC_OK)
                 .message(message)
                 .productId(product.getProductId())

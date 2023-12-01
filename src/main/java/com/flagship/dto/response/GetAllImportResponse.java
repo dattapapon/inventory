@@ -10,12 +10,12 @@ import java.util.List;
 @Builder
 public class GetAllImportResponse {
     private Integer code;
-    private List<GetImportResponse> getImportResponseList;
+    private List<ImportResponse> importResponseList;
 
-    public static GetAllImportResponse from(List<GetImportResponse> importResponses) {
+    public static GetAllImportResponse from(List<ImportResponse> importResponses) {
         return GetAllImportResponse.builder()
                 .code(HttpStatus.SC_OK)
-                .getImportResponseList(importResponses)
+                .importResponseList(importResponses)
                 .build();
     }
 }

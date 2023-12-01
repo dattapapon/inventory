@@ -1,16 +1,18 @@
 package com.flagship.dto.request;
 
 import com.flagship.constant.Regex;
+import com.flagship.constant.enums.CustomerType;
 import com.flagship.dto.RequestValidator;
 import com.flagship.exception.RequestValidationException;
 import lombok.Data;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Data
-public class CreateCustomerRequest implements RequestValidator {
+public class CustomerRequest implements RequestValidator {
     @Valid
     @NotEmpty
     private String customerId;
@@ -32,6 +34,9 @@ public class CreateCustomerRequest implements RequestValidator {
     private String email;
 
     @Valid
+    private CustomerType customerType;
+
+    @Valid
     @NotEmpty
     private String userEmail;
 
@@ -42,6 +47,10 @@ public class CreateCustomerRequest implements RequestValidator {
         }
         if (!Pattern.matches(String.valueOf(Regex.MOBILE_NUMBER_REGEX), phoneNumber)) {
             throw new RequestValidationException("Phone Number Pattern is not Match.");
+        }
+        if (Objects.isNull(customerType)) {
+            throw new RequestValidationException("Customer type should not be null. Customer Should be LOCAL " +
+                    "or CORPORATE");
         }
     }
 }

@@ -2,8 +2,10 @@ package com.flagship.constant.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+@Getter
 public enum Cause {
     DAMAGED(1),
     DATE_OVER(2),
@@ -36,10 +38,6 @@ public enum Cause {
             default:
                 return null;
         }
-    }
-
-    public int getType() {
-        return type;
     }
 
     @JsonValue

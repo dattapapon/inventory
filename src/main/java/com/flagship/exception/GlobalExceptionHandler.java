@@ -1,6 +1,8 @@
 package com.flagship.exception;
 
 import com.flagship.dto.response.ErrorResponse;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -8,6 +10,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+@Getter
+@Setter
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)

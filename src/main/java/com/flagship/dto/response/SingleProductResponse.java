@@ -6,13 +6,13 @@ import lombok.Data;
 
 @Data
 @Builder
-public class GetProductResponse {
+public class SingleProductResponse {
     private String productId;
     private String productName;
     private String userName;
 
-    public static GetProductResponse from(Product product) {
-        return GetProductResponse.builder()
+    public static SingleProductResponse from(Product product) {
+        return SingleProductResponse.builder()
                 .productId(product.getProductId())
                 .productName(product.getProductName())
                 .userName(product.getCreatedBy().getName())

@@ -3,7 +3,6 @@ package com.flagship.dto.response;
 import com.flagship.model.db.User;
 import lombok.Builder;
 import lombok.Data;
-import org.apache.hc.core5.http.HttpStatus;
 
 @Data
 @Builder

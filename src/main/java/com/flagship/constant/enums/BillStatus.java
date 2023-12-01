@@ -2,8 +2,10 @@ package com.flagship.constant.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+@Getter
 public enum BillStatus {
     PAID(1),
     UNPAID(2),
@@ -41,10 +43,6 @@ public enum BillStatus {
             default:
                 return null;
         }
-    }
-
-    public int getType() {
-        return type;
     }
 
     @JsonValue
