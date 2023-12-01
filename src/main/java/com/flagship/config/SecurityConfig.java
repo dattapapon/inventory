@@ -15,7 +15,7 @@ public class SecurityConfig {
     public SecurityFilterChain configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable().authorizeRequests()
                 .antMatchers("/auth/**", "/user/**", "/product/**", "/wastage/**",
-                        "/customer/**", "/salesPerson/**", "/swagger-ui/**", "/order/**", "/v3/api-docs/**")
+                        "/customer/**", "/salesPerson/**", "/common/**", "/swagger-ui/**", "/order/**", "/v3/api-docs/**")
                 .permitAll()
                 .anyRequest().authenticated();
         return httpSecurity.build();
@@ -24,8 +24,8 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("https://tanisatubabd.com");
-//        config.addAllowedOrigin("http://localhost:3000");
+//        config.addAllowedOrigin("https://tanisatubabd.com");
+        config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedHeader("*");
         config.addAllowedMethod(HttpMethod.GET);
         config.addAllowedMethod(HttpMethod.POST);

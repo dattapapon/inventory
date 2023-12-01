@@ -6,35 +6,35 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
 @Getter
-public enum Gender {
-    MALE(1),
-    FEMALE(2),
+public enum CustomerType {
+    LOCAL(1),
+    CORPORATE(2),
     ;
 
     private final int type;
 
-    Gender(int type) {
+    CustomerType(int type) {
         this.type = type;
     }
 
-    public static Gender fromValue(int value) {
+    public static CustomerType fromValue(int value) {
         switch (value) {
             case 1:
-                return MALE;
+                return LOCAL;
             case 2:
-                return FEMALE;
+                return CORPORATE;
             default:
                 return null;
         }
     }
 
     @JsonCreator
-    public static Gender fromName(String name) {
+    public static CustomerType fromName(String name) {
         switch (StringUtils.upperCase(name)) {
-            case "MALE":
-                return MALE;
-            case "FEMALE":
-                return FEMALE;
+            case "LOCAL":
+                return LOCAL;
+            case "CORPORATE":
+                return CORPORATE;
             default:
                 return null;
         }
@@ -44,5 +44,4 @@ public enum Gender {
     public String getName() {
         return toString();
     }
-
 }

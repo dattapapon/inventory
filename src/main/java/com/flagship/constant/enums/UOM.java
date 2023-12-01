@@ -2,39 +2,39 @@ package com.flagship.constant.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-@Getter
-public enum Gender {
-    MALE(1),
-    FEMALE(2),
+public enum UOM {
+    KG_LT(1),
+    PIECE(2),
+    CARTOON(3),
     ;
 
-    private final int type;
-
-    Gender(int type) {
-        this.type = type;
+    UOM(int type) {
     }
 
-    public static Gender fromValue(int value) {
+    public static UOM fromValue(int value) {
         switch (value) {
             case 1:
-                return MALE;
+                return KG_LT;
             case 2:
-                return FEMALE;
+                return PIECE;
+            case 3:
+                return CARTOON;
             default:
                 return null;
         }
     }
 
     @JsonCreator
-    public static Gender fromName(String name) {
+    public static UOM fromName(String name) {
         switch (StringUtils.upperCase(name)) {
-            case "MALE":
-                return MALE;
-            case "FEMALE":
-                return FEMALE;
+            case "KG_LT":
+                return KG_LT;
+            case "PIECE":
+                return PIECE;
+            case "CARTOON":
+                return CARTOON;
             default:
                 return null;
         }
@@ -44,5 +44,4 @@ public enum Gender {
     public String getName() {
         return toString();
     }
-
 }

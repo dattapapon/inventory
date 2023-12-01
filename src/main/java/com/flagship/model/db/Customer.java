@@ -2,6 +2,7 @@ package com.flagship.model.db;
 
 import com.flagship.constant.db.DbConstant.DbCustomer;
 import com.flagship.constant.db.DbConstant.DbUser;
+import com.flagship.constant.enums.CustomerType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -36,6 +37,10 @@ public class Customer {
 
     @Column(name = DbCustomer.EMAIL, nullable = false)
     private String email;
+
+    @Enumerated(value = EnumType.STRING)
+    @Column(name = DbCustomer.CUSTOMER_TYPE, nullable = false)
+    private CustomerType customerType;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = DbCustomer.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)

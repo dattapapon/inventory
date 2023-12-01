@@ -1,8 +1,8 @@
 package com.flagship.service.impl;
 
-import com.flagship.dto.request.CreateCustomerRequest;
-import com.flagship.dto.response.CreateCustomerResponse;
-import com.flagship.dto.response.GetAllCustomerResponse;
+import com.flagship.constant.enums.CustomerType;
+import com.flagship.dto.request.CustomerRequest;
+import com.flagship.dto.response.CustomerResponse;
 import com.flagship.dto.response.GetCustomerResponse;
 import com.flagship.exception.RequestValidationException;
 import com.flagship.model.db.Customer;
@@ -12,8 +12,6 @@ import com.flagship.repository.UserRepository;
 import com.flagship.service.CustomerService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,25 +25,26 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CreateCustomerResponse addCustomer(CreateCustomerRequest createCustomerRequest) {
-        createCustomerRequest.validate();
-        Boolean checkCustomerExist = customerExist(createCustomerRequest.getCustomerId());
+    public CustomerResponse addCustomer(CustomerRequest customerRequest) {
+        customerRequest.validate();
+        Boolean checkCustomerExist = customerExist(customerRequest.getCustomerId());
         if (checkCustomerExist) {
             throw new RequestValidationException("Customer id is exist");
         }
-        Optional<User> user = userRepository.findByEmail(createCustomerRequest.getUserEmail());
+        Optional<User> user = userRepository.findByEmail(customerRequest.getUserEmail());
         if (user.isEmpty()) {
             throw new RequestValidationException("User not exist");
         }
         Customer customer = new Customer();
-        customer.setCustomerId(createCustomerRequest.getCustomerId());
-        customer.setCustomerName(createCustomerRequest.getCustomerName());
-        customer.setCompany(createCustomerRequest.getCompany());
-        customer.setPhoneNumber(createCustomerRequest.getPhoneNumber());
-        customer.setEmail(createCustomerRequest.getEmail());
+        customer.setCustomerId(customerRequest.getCustomerId());
+        customer.setCustomerName(customerRequest.getCustomerName());
+        customer.setCompany(customerRequest.getCompany());
+        customer.setPhoneNumber(customerRequest.getPhoneNumber());
+        customer.setEmail(customerRequest.getEmail());
+        customer.setCustomerType(CustomerType.fromName(customerRequest.getCustomerType().getName()));
         customer.setCreatedBy(user.get());
         customerRepository.save(customer);
-        return CreateCustomerResponse.from("Customer added Successfully", customer);
+        return CustomerResponse.from("Customer added Successfully", customer);
     }
     @Override
     public GetCustomerResponse getCustomer(String customerId) {

@@ -2,8 +2,10 @@ package com.flagship.constant.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+@Getter
 public enum Warehouse {
     SIKAJU_COLD_STORAGE(1),
     BADC_COLD_STORAGE(2),
@@ -51,10 +53,6 @@ public enum Warehouse {
             default:
                 return null;
         }
-    }
-
-    public int getType() {
-        return type;
     }
 
     @JsonValue
