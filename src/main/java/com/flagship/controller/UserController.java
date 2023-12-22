@@ -13,18 +13,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-    private final UserService userService;
+  private final UserService userService;
 
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+  @Autowired
+  public UserController(UserService userService) {
+    this.userService = userService;
+  }
 
-    @GetMapping(
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    ResponseEntity<GetUsers> getAllUser() {
-        GetUsers getAllUserResponses = userService.getAllUser();
-        return new ResponseEntity<>(getAllUserResponses, HttpStatus.OK);
-    }
+  @GetMapping(
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  ResponseEntity<GetUsers> getAllUser() {
+    GetUsers getAllUserResponses = userService.getAllUser();
+    return new ResponseEntity<>(getAllUserResponses, HttpStatus.OK);
+  }
 }

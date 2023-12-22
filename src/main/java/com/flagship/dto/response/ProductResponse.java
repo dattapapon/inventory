@@ -8,19 +8,19 @@ import org.apache.hc.core5.http.HttpStatus;
 @Builder
 @Data
 public class ProductResponse {
-    private Integer code;
-    private String message;
-    private String productId;
-    private String productName;
-    private String userEmail;
+  private Integer code;
+  private String message;
+  private String productId;
+  private String productName;
+  private String userEmail;
 
-    public static ProductResponse from(String message, Product product) {
-        return ProductResponse.builder()
-                .code(HttpStatus.SC_OK)
-                .message(message)
-                .productId(product.getProductId())
-                .productName(product.getProductName())
-                .userEmail(product.getCreatedBy().getEmail())
-                .build();
-    }
+  public static ProductResponse from(String message, Product product) {
+    return ProductResponse.builder()
+            .code(HttpStatus.SC_OK)
+            .message(message)
+            .productId(product.getProductId())
+            .productName(product.getProductName())
+            .userEmail(product.getCreatedBy().getEmail())
+            .build();
+  }
 }

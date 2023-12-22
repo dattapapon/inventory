@@ -9,15 +9,15 @@ import javax.validation.constraints.NotEmpty;
 
 @Data
 public class LoginRequest implements RequestValidator {
-    @Valid
-    @NotEmpty
-    private String email;
-    @Valid
-    @NotEmpty
-    private String password;
+  @Valid
+  @NotEmpty
+  private String email;
+  @Valid
+  @NotEmpty
+  private String password;
 
-    @Override
-    public void validate() {
+  @Override
+  public void validate() {
 
-    }
+  }
 }

@@ -9,7 +9,5 @@ import java.util.List;
 
 @Repository
 public interface WastageRepository extends PagingAndSortingRepository<Wastage, Long> {
-    List<Wastage> findAll();
-
-    List<Wastage> findByCreatedOnBetweenOrderByCreatedOnAsc(ZonedDateTime start, ZonedDateTime end);
+  List<Wastage> findByCreatedOnBetweenOrderByCreatedOnAsc(ZonedDateTime start, ZonedDateTime end);
 }

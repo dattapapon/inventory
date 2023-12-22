@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface CountryRepository extends PagingAndSortingRepository<Country, Long> {
-    Optional<Country> findByCountryId(String countryId);
+  Optional<Country> findByCountryId(String countryId);
 }

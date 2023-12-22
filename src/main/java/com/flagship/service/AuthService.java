@@ -6,7 +6,7 @@ import com.flagship.dto.response.LoginResponse;
 import com.flagship.dto.response.SignUpResponse;
 
 public interface AuthService {
-    SignUpResponse signUp(SignUpRequest signUpRequest);
+  SignUpResponse signUp(SignUpRequest signUpRequest);
 
-    LoginResponse login(LoginRequest loginRequest);
+  LoginResponse login(LoginRequest loginRequest);
 }

@@ -1,8 +1,8 @@
 package com.flagship.model.db;
 
-import com.flagship.constant.db.DbConstant.DbOrderDetails;
-import com.flagship.constant.db.DbConstant.DbOrderMaster;
-import com.flagship.constant.db.DbConstant.DbUser;
+import com.flagship.constant.db.DbConstant.*;
+import com.flagship.constant.enums.OrderStatus;
+import com.flagship.constant.enums.UOM;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,68 +18,60 @@ import java.time.ZonedDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = DbOrderDetails.TABLE_NAME)
+@ToString
 public class OrderDetails implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = DbOrderDetails.ID)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = DbOrderDetails.ID)
+  private Long id;
 
-    @Column(name = DbOrderDetails.PRODUCT_ID, nullable = false)
-    private String productId;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbOrderDetails.ORDER, referencedColumnName = DbOrderMaster.ORDER_ID, nullable = false)
+  private OrderMaster order;
 
-    @Column(name = DbOrderDetails.PRODUCT_NAME, nullable = false)
-    private String productName;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbOrderDetails.PRODUCT, referencedColumnName = DbProduct.PRODUCT_ID, nullable = false)
+  private Product product;
 
-    @Column(name = DbOrderDetails.CARTON_QUANTITY, nullable = false)
-    private Long cartonQuantity;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbOrderDetails.SHIPMENT, referencedColumnName = DbImportMaster.SHIPMENT_NO, nullable = false)
+  private ImportMaster shipment;
 
-    @Column(name = DbOrderDetails.CARTOON_SELLING_PRICE)
-    private Double cartonSellingPrice;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbOrderDetails.SALE, referencedColumnName = DbSale.SALE_CODE)
+  private Sale sale;
 
-    @Column(name = DbOrderDetails.CARTOON_WEIGHT)
-    private Double cartonWeight;
+  @Column(name = DbOrderDetails.VAT)
+  private Double vat;
 
-    @Column(name = DbOrderDetails.PIECE_QUANTITY)
-    private Long pieceQuantity;
+  @Enumerated(value = EnumType.STRING)
+  @Column(name = DbOrderDetails.UOM, nullable = false)
+  private UOM uom;
 
-    @Column(name = DbOrderDetails.PIECE_SELLING_PRICE)
-    private Double pieceSellingPrice;
+  @Column(name = DbOrderDetails.QUANTITY, nullable = false)
+  private Double quantity;
 
-    @Column(name = DbOrderDetails.PIECE_WEIGHT)
-    private Double pieceWeight;
+  @Column(name = DbOrderDetails.DISCOUNT)
+  private Double discount;
 
-    @Column(name = DbOrderDetails.KG_LT_QUANTITY)
-    private Long kgLtQuantity;
+  @Column(name = DbOrderDetails.REMARKS)
+  private String remarks;
 
-    @Column(name = DbOrderDetails.KG_LT_SELLING_PRICE)
-    private Double kgLtSellingPrice;
+  @Column(name = DbOrderDetails.PRICE, nullable = false)
+  private Double price;
 
-    @Column(name = DbOrderDetails.TAX)
-    private Double tax;
+  @Column(name = DbOrderDetails.TOTAL_PRICE)
+  private Double totalPrice;
 
-    @Column(name = DbOrderDetails.VAT)
-    private Double vat;
+  @Enumerated(value = EnumType.STRING)
+  @Column(name = DbOrderDetails.ORDER_STATUS, nullable = false)
+  private OrderStatus status;
 
-    @Column(name = DbOrderDetails.TOTAL_BILL)
-    private Double bill;
+  @CreationTimestamp
+  @Column(name = DbOrderDetails.CREATED_ON, nullable = false, updatable = false)
+  private ZonedDateTime createdOn;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbOrderDetails.ORDER_ID, referencedColumnName = DbOrderMaster.ID, nullable = false, updatable = false)
-    private OrderMaster orderId;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbOrderDetails.CREATED_BY, referencedColumnName = DbUser.EMAIL, updatable = false)
-    private User createdBy;
-
-    @CreationTimestamp
-    @Column(name = DbOrderDetails.CREATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime createdOn;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbOrderDetails.LAST_UPDATED_BY, referencedColumnName = DbUser.EMAIL)
-    private User updatedBy;
-
-    @UpdateTimestamp
-    @Column(name = DbOrderDetails.LAST_UPDATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime updatedOn;
+  @UpdateTimestamp
+  @Column(name = DbOrderDetails.LAST_UPDATED_ON)
+  private ZonedDateTime updatedOn;
 }

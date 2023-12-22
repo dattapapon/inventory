@@ -8,32 +8,33 @@ import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.regex.Pattern;
 
 @Getter
 @Setter
 public class ImportRequest implements RequestValidator {
-    @Valid
-    @NotEmpty
-    private String shipmentNo;
-    @Valid
-    @NotEmpty
-    private String country;
-    @Valid
-    @NotEmpty
-    private String date;
-    @Valid
-    @NotEmpty
-    private String user;
-    @Valid
-    @NotEmpty
-    List<ImportDetailsRequest> importDetailsRequestList;
+  @Valid
+  @NotEmpty
+  private String shipmentNo;
+  @Valid
+  @NotNull
+  private CommonRequest country;
+  @Valid
+  @NotEmpty
+  private String date;
+  @Valid
+  @NotEmpty
+  private String user;
+  @Valid
+  @NotNull
+  List<ImportDetailsRequest> importDetailsRequestList;
 
-    @Override
-    public void validate() {
-        if (!Pattern.matches(String.valueOf(Regex.DATE_REGEX), date)) {
-            throw new RequestValidationException("Date Should be yyyy-MM-dd(1900-01-01)");
-        }
+  @Override
+  public void validate() {
+    if (!Pattern.matches(String.valueOf(Regex.DATE_REGEX), date)) {
+      throw new RequestValidationException("Date Should be yyyy-MM-dd(1900-01-01)");
     }
+  }
 }

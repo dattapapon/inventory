@@ -7,15 +7,13 @@ import lombok.Data;
 @Data
 @Builder
 public class SingleProductResponse {
-    private String productId;
-    private String productName;
-    private String userName;
+  private String productId;
+  private String productName;
 
-    public static SingleProductResponse from(Product product) {
-        return SingleProductResponse.builder()
-                .productId(product.getProductId())
-                .productName(product.getProductName())
-                .userName(product.getCreatedBy().getName())
-                .build();
-    }
+  public static SingleProductResponse from(Product product) {
+    return SingleProductResponse.builder()
+            .productId(product.getProductId())
+            .productName(product.getProductName())
+            .build();
+  }
 }

@@ -6,10 +6,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserExistException extends RuntimeException {
-    private final Integer code;
+  private final Integer code;
 
-    public UserExistException(Integer code, String message) {
-        super(message);
-        this.code = code;
-    }
+  public UserExistException(Integer code, String message) {
+    super(message);
+    this.code = code;
+  }
 }

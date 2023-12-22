@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 
 @Getter
@@ -16,37 +17,37 @@ import java.time.ZonedDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = DbSalesPerson.TABLE_NAME)
-public class SalesPerson {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = DbSalesPerson.ID)
-    private Long id;
+public class SalesPerson implements Serializable {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = DbSalesPerson.ID)
+  private Long id;
 
-    @Column(name = DbSalesPerson.SALES_PERSON_ID, nullable = false, unique = true)
-    private String salesPersonId;
+  @Column(name = DbSalesPerson.SALES_PERSON_ID, nullable = false, unique = true)
+  private String salesPersonId;
 
-    @Column(name = DbSalesPerson.SALES_PERSON_NAME, nullable = false)
-    private String salesPersonName;
+  @Column(name = DbSalesPerson.SALES_PERSON_NAME, nullable = false)
+  private String salesPersonName;
 
-    @Column(name = DbSalesPerson.PHONE_NUMBER, nullable = false)
-    private String phoneNumber;
+  @Column(name = DbSalesPerson.PHONE_NUMBER, nullable = false)
+  private String phoneNumber;
 
-    @Column(name = DbSalesPerson.AREA, nullable = false)
-    private String area;
+  @Column(name = DbSalesPerson.AREA)
+  private String area;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbSalesPerson.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
-    private User createdBy;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbSalesPerson.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
+  private User createdBy;
 
-    @CreationTimestamp
-    @Column(name = DbSalesPerson.CREATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime createdOn;
+  @CreationTimestamp
+  @Column(name = DbSalesPerson.CREATED_ON, nullable = false, updatable = false)
+  private ZonedDateTime createdOn;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbSalesPerson.LAST_UPDATED_BY, referencedColumnName = DbUser.EMAIL)
-    private User updatedBy;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbSalesPerson.LAST_UPDATED_BY, referencedColumnName = DbUser.EMAIL)
+  private User updatedBy;
 
-    @UpdateTimestamp
-    @Column(name = DbSalesPerson.LAST_UPDATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime updatedOn;
+  @UpdateTimestamp
+  @Column(name = DbSalesPerson.LAST_UPDATED_ON)
+  private ZonedDateTime updatedOn;
 }

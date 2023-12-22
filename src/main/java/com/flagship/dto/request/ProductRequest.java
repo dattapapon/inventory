@@ -8,18 +8,18 @@ import javax.validation.constraints.NotEmpty;
 
 @Data
 public class ProductRequest implements RequestValidator {
-    @Valid
-    @NotEmpty
-    private String productId;
-    @Valid
-    @NotEmpty
-    private String productName;
-    @Valid
-    @NotEmpty
-    private String userEmail;
+  @Valid
+  @NotEmpty
+  private String productId;
+  @Valid
+  @NotEmpty
+  private String productName;
+  @Valid
+  @NotEmpty
+  private String userEmail;
 
-    @Override
-    public void validate() {
+  @Override
+  public void validate() {
 
-    }
+  }
 }
