@@ -9,13 +9,13 @@ import java.util.List;
 @Data
 @Builder
 public class GetUsers {
-    private Integer code;
-    private List<GetAllUserResponse> getAllUserResponseList;
+  private Integer code;
+  private List<AllUserResponse> allUserResponseList;
 
-    public static GetUsers from(List<GetAllUserResponse> getAllUserResponseList) {
-        return GetUsers.builder()
-                .code(HttpStatus.SC_OK)
-                .getAllUserResponseList(getAllUserResponseList)
-                .build();
-    }
+  public static GetUsers from(List<AllUserResponse> allUserResponseList) {
+    return GetUsers.builder()
+            .code(HttpStatus.SC_OK)
+            .allUserResponseList(allUserResponseList)
+            .build();
+  }
 }

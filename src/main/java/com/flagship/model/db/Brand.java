@@ -17,22 +17,22 @@ import java.time.ZonedDateTime;
 @Entity
 @Table(name = DbBrand.TABLE_NAME)
 public class Brand implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = DbBrand.ID)
-    private Long Id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = DbBrand.ID)
+  private Long Id;
 
-    @Column(name = DbBrand.BRAND_ID, nullable = false)
-    private String brandId;
+  @Column(name = DbBrand.BRAND_ID, nullable = false)
+  private String brandId;
 
-    @Column(name = DbBrand.BRAND_NAME, nullable = false)
-    private String brandName;
+  @Column(name = DbBrand.BRAND_NAME, nullable = false)
+  private String brandName;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = DbBrand.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
-    private User createdBy;
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbBrand.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
+  private User createdBy;
 
-    @CreationTimestamp
-    @Column(name = DbBrand.CREATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime createdOn;
+  @CreationTimestamp
+  @Column(name = DbBrand.CREATED_ON, nullable = false, updatable = false)
+  private ZonedDateTime createdOn;
 }

@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface BrandRepository extends PagingAndSortingRepository<Brand, Long> {
-    Optional<Brand> findByBrandId(String brandId);
+  Optional<Brand> findByBrandId(String brandId);
 }

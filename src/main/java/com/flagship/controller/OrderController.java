@@ -1,8 +1,9 @@
 package com.flagship.controller;
 
+import com.flagship.dto.request.EditOrderRequest;
 import com.flagship.dto.request.OrderMasterRequest;
-import com.flagship.dto.response.AddOrderMasterResponse;
-import com.flagship.dto.response.OrderBillsResponse;
+import com.flagship.dto.request.UpdateOrderRequest;
+import com.flagship.dto.response.*;
 import com.flagship.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,50 +18,144 @@ import java.util.List;
 @RestController
 @RequestMapping("/order")
 public class OrderController {
-    private final OrderService orderService;
+  private final OrderService orderService;
 
-    @Autowired
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+  @Autowired
+  public OrderController(OrderService orderService) {
+    this.orderService = orderService;
+  }
 
-    @PostMapping(
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
+  @PostMapping(
+          produces = MediaType.APPLICATION_JSON_VALUE,
+          consumes = MediaType.APPLICATION_JSON_VALUE
+  )
 
-    private ResponseEntity<AddOrderMasterResponse> addOrder(@Valid @NotNull @RequestBody OrderMasterRequest orderMasterRequest) {
-        AddOrderMasterResponse orderMasterResponse = orderService.createOrder(orderMasterRequest);
-        return new ResponseEntity<>(orderMasterResponse, HttpStatus.OK);
-    }
+  private ResponseEntity<OrderResponse> createOrder(@Valid @NotNull @RequestBody OrderMasterRequest orderMasterRequest) {
+    OrderResponse orderMasterResponse = orderService.createOrder(orderMasterRequest);
+    return new ResponseEntity<>(orderMasterResponse, HttpStatus.OK);
+  }
 
-    @GetMapping(
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+  @GetMapping(
+          value = "/challan",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<ChallanResponse> getCustomerLastChallan(@RequestParam(value = "customerId") String customer) {
+    ChallanResponse response = orderService.getCustomerChallan(customer);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
 
-    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
-        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
-        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
-    }
+  @GetMapping(
+          value = "/uom/available",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<UomAndAvailableResponse> getUomAndAvailable(@RequestParam(value = "product") String product,
+                                                                    @RequestParam(value = "shipment") String shipment) {
+    UomAndAvailableResponse response = orderService.getUomAndAvailable(product, shipment);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
 
-    @GetMapping(
-            value = "/time",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
+  @GetMapping(
+          value = "/bills",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllBillsResponse> getBills() {
+    AllBillsResponse response = orderService.getBills();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
 
-    private ResponseEntity<List<OrderBillsResponse>> getAllBillsByTime(@RequestParam(value = "start") String start,
-                                                                       @RequestParam(value = "end") String end) {
-        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBillsByTime(start, end);
-        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
-    }
+  @GetMapping(
+          value = "/bill/details",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<BillsDetailsResponse> getBillsDetails(@RequestParam(value = "order") Long orderId) {
+    BillsDetailsResponse response = orderService.getBillsDetails(orderId);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
 
-//    @GetMapping(
-//            value = "/bills",
-//            produces = MediaType.APPLICATION_JSON_VALUE
-//    )
-//
-//    private ResponseEntity<List<OrderBillsResponse>> getAllBills() {
-//        List<OrderBillsResponse> orderBillsResponseList = orderService.getAllBills();
-//        return new ResponseEntity<>(orderBillsResponseList, HttpStatus.OK);
-//    }
+  @GetMapping(
+          value = "/bill/vat",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<VatDetailsResponse> getVatDetails(@RequestParam(value = "order") Long orderId) {
+    VatDetailsResponse response = orderService.getVatDetails(orderId);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/price",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<LastPriceResponse> getProductLastPrice(@RequestParam(value = "customer") String customer,
+                                                               @RequestParam(value = "product") String product) {
+    LastPriceResponse response = orderService.getProductLastPrice(customer, product);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/daily",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<DailyOrderResponse> getDailyOrder(@RequestParam(value = "date", required = false) String date,
+                                                          @RequestParam(value = "type") String type) {
+    DailyOrderResponse response = orderService.getDailyOrder(date, type);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/short",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<DailyOrderShortResponse> getDailyOrderShort(@RequestParam(value = "date", required = false)
+                                                                    String date, @RequestParam(value = "type") String type) {
+    DailyOrderShortResponse response = orderService.getDailyOrderShort(date, type);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/table",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderTableResponse> getTable() {
+    OrderTableResponse response = orderService.getTable();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @PutMapping(
+          consumes = MediaType.APPLICATION_JSON_VALUE,
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<EditOrderResponse> editOrder(@RequestParam(value = "order") Long order,
+                                                     @Valid @NotNull @RequestBody List<EditOrderRequest> updateOrderRequest) {
+    EditOrderResponse response = orderService.editOrder(order, updateOrderRequest);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/return",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<ReturnDetailsResponse> getReturn(@RequestParam(value = "order") Long orderId) {
+    ReturnDetailsResponse response = orderService.getReturn(orderId);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/pending",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllPendingOrdersResponse> getPendingOrder() {
+    AllPendingOrdersResponse response = orderService.getPendingOrder();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @PutMapping(
+          value = "/status",
+          consumes = MediaType.APPLICATION_JSON_VALUE,
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderRequisitionResponse> updateOrderStatus(@RequestBody @Valid @NotNull
+                                                                    List<UpdateOrderRequest> selectedRows) {
+    OrderRequisitionResponse response = orderService.updateOrderStatus(selectedRows);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
 }

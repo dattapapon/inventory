@@ -4,12 +4,9 @@ import com.flagship.model.db.Customer;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CustomerRepository extends PagingAndSortingRepository<Customer, Long> {
-    Optional<Customer> findByCustomerId(String customerId);
-
-    List<Customer> findAll();
+  Optional<Customer> findByCustomerId(String customerId);
 }

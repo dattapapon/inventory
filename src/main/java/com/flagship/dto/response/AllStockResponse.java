@@ -9,13 +9,13 @@ import java.util.List;
 @Data
 @Builder
 public class AllStockResponse {
-    private Integer code;
-    private List<StockResponse> stockResponseList;
+  private Integer code;
+  private List<StockResponse> stockResponseList;
 
-    public static AllStockResponse from(List<StockResponse> stockResponseList){
-        return AllStockResponse.builder()
-                .code(HttpStatus.SC_OK)
-                .stockResponseList(stockResponseList)
-                .build();
-    }
+  public static AllStockResponse from(List<StockResponse> stockResponseList) {
+    return AllStockResponse.builder()
+            .code(HttpStatus.SC_OK)
+            .stockResponseList(stockResponseList)
+            .build();
+  }
 }

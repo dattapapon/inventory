@@ -9,9 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends PagingAndSortingRepository<User, Long> {
-    Optional<User> findByEmail(String email);
-
-    Optional<User> findById(Long id);
-
-    List<User> findAll();
+  Optional<User> findByEmail(String email);
 }

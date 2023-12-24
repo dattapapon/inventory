@@ -1,23 +1,35 @@
 package com.flagship.dto.request;
 
+import com.flagship.constant.enums.UOM;
 import lombok.Data;
 
-import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @Data
 public class OrderDetailsRequest {
-    List<OrderCuttingRequest> cutting;
-    private String productId;
-    private String productName;
-    private Long cartonQuantity;
-    private Double cartonPrice;
-    private Double cartonWeight;
-    private Long pieceQuantity;
-    private Double piecePrice;
-    private Double pieceWeight;
-    private Long kgLtQuantity;
-    private Double kgLtPrice;
-    private Double tax;
-    private Double vat;
-    private Boolean cuttings;
+  @Valid
+  @NotNull
+  private CommonRequest product;
+  @Valid
+  @NotNull
+  private CommonRequest shipment;
+  private String sale;
+  private String saleCode;
+  private Double vat;
+  @Valid
+  @NotNull
+  private UOM uom;
+  @Valid
+  @NotNull
+  private Double quantity;
+  @Valid
+  @NotNull
+  private Double available;
+  private Double discount;
+  private String remarks;
+  @Valid
+  @NotNull
+  private Double price;
+  private Double totalPrice;
 }

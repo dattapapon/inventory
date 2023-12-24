@@ -1,6 +1,6 @@
 package com.flagship.service.impl;
 
-import com.flagship.dto.response.GetAllUserResponse;
+import com.flagship.dto.response.AllUserResponse;
 import com.flagship.dto.response.GetUsers;
 import com.flagship.model.db.User;
 import com.flagship.repository.UserRepository;
@@ -13,20 +13,20 @@ import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
 
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+  @Autowired
+  public UserServiceImpl(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
 
-    @Override
-    public GetUsers getAllUser() {
-        List<User> userList = userRepository.findAll();
-        List<GetAllUserResponse> getAllUserResponses = new ArrayList<>();
-        for (User user : userList) {
-            getAllUserResponses.add(GetAllUserResponse.from(user));
-        }
-        return GetUsers.from(getAllUserResponses);
+  @Override
+  public GetUsers getAllUser() {
+    List<User> userList = (List<User>) userRepository.findAll();
+    List<AllUserResponse> allUserRespons = new ArrayList<>();
+    for (User user : userList) {
+      allUserRespons.add(AllUserResponse.from(user));
     }
+    return GetUsers.from(allUserRespons);
+  }
 }

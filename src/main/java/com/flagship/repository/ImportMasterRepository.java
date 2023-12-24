@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface ImportMasterRepository extends PagingAndSortingRepository<ImportMaster, Long> {
-    Optional<ImportMaster> findByShipmentNo(String shipmentNo);
+  Optional<ImportMaster> findByShipmentNo(String shipmentNo);
 }

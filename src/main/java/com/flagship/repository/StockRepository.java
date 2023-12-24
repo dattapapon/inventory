@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface StockRepository extends PagingAndSortingRepository<Stock, Long> {
-    Optional<Stock> findByProduct(Product product);
+  Optional<Stock> findByProduct(Product product);
 }

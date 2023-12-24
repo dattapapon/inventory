@@ -17,28 +17,28 @@ import java.time.ZonedDateTime;
 @Entity
 @Table(name = DbUser.TABLE_NAME)
 public class User implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = DbUser.ID)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = DbUser.ID)
+  private Long id;
 
-    @Column(name = DbUser.NAME, nullable = false)
-    private String name;
+  @Column(name = DbUser.NAME, nullable = false)
+  private String name;
 
-    @Column(name = DbUser.EMAIL, nullable = false, unique = true)
-    private String email;
+  @Column(name = DbUser.EMAIL, nullable = false, unique = true)
+  private String email;
 
-    @Column(name = DbUser.PASSWORD, nullable = false)
-    private String password;
+  @Column(name = DbUser.PASSWORD, nullable = false)
+  private String password;
 
-    @Column(name = DbUser.DATE_OF_BIRTH, nullable = false)
-    private ZonedDateTime dateOfBirth;
+  @Column(name = DbUser.DATE_OF_BIRTH, nullable = false)
+  private ZonedDateTime dateOfBirth;
 
-    @Column(name = DbUser.GENDER, nullable = false)
-    @Enumerated(value = EnumType.STRING)
-    private Gender gender;
+  @Column(name = DbUser.GENDER, nullable = false)
+  @Enumerated(value = EnumType.STRING)
+  private Gender gender;
 
-    @CreationTimestamp
-    @Column(name = DbUser.CREATED_ON, nullable = false, updatable = false)
-    private ZonedDateTime createdOn;
+  @CreationTimestamp
+  @Column(name = DbUser.CREATED_ON, nullable = false, updatable = false)
+  private ZonedDateTime createdOn;
 }

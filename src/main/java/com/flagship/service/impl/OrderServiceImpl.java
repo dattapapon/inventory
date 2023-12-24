@@ -1,160 +1,685 @@
 package com.flagship.service.impl;
 
-import com.flagship.dto.request.OrderCuttingRequest;
-import com.flagship.dto.request.OrderDetailsRequest;
-import com.flagship.dto.request.OrderMasterRequest;
-import com.flagship.dto.response.AddOrderMasterResponse;
-import com.flagship.dto.response.GetOrderCuttingResponse;
-import com.flagship.dto.response.GetOrderDetailsResponse;
-import com.flagship.dto.response.OrderBillsResponse;
-import com.flagship.model.db.OrderCutting;
-import com.flagship.model.db.OrderDetails;
-import com.flagship.model.db.OrderMaster;
-import com.flagship.repository.OrderCuttingRepository;
-import com.flagship.repository.OrderDetailsRepository;
-import com.flagship.repository.OrderMasterRepository;
+import com.flagship.constant.enums.CustomerType;
+import com.flagship.constant.enums.OrderStatus;
+import com.flagship.constant.enums.UOM;
+import com.flagship.dto.request.*;
+import com.flagship.dto.response.*;
+import com.flagship.exception.RequestValidationException;
+import com.flagship.model.db.*;
+import com.flagship.repository.*;
 import com.flagship.service.OrderService;
 import com.flagship.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class OrderServiceImpl implements OrderService {
-    private final OrderMasterRepository orderMasterRepository;
-    private final OrderDetailsRepository orderDetailsRepository;
-    private final OrderCuttingRepository orderCuttingRepository;
+  private final OrderMasterRepository orderMasterRepository;
+  private final OrderDetailsRepository orderDetailsRepository;
+  private final CustomerRepository customerRepository;
+  private final ImportDetailsRepository importDetailsRepository;
+  private final ProductRepository productRepository;
+  private final ImportMasterRepository importMasterRepository;
+  private final UserRepository userRepository;
+  private final StockRepository stockRepository;
+  private final SalesPersonRepository salesPersonRepository;
+  private final SaleRepository saleRepository;
+  private final ReturnsRepository returnsRepository;
 
-    @Autowired
-    public OrderServiceImpl(OrderMasterRepository orderMasterRepository, OrderDetailsRepository orderDetailsRepository,
-                            OrderCuttingRepository orderCuttingRepository) {
-        this.orderMasterRepository = orderMasterRepository;
-        this.orderDetailsRepository = orderDetailsRepository;
-        this.orderCuttingRepository = orderCuttingRepository;
+  @Autowired
+  public OrderServiceImpl(OrderMasterRepository orderMasterRepository, OrderDetailsRepository orderDetailsRepository,
+                          CustomerRepository customerRepository, ImportDetailsRepository importDetailsRepository,
+                          ProductRepository productRepository, ImportMasterRepository importMasterRepository,
+                          UserRepository userRepository, StockRepository stockRepository,
+                          SalesPersonRepository salesPersonRepository, SaleRepository saleRepository,
+                          ReturnsRepository returnsRepository) {
+    this.orderMasterRepository = orderMasterRepository;
+    this.orderDetailsRepository = orderDetailsRepository;
+    this.customerRepository = customerRepository;
+    this.importDetailsRepository = importDetailsRepository;
+    this.productRepository = productRepository;
+    this.importMasterRepository = importMasterRepository;
+    this.userRepository = userRepository;
+    this.stockRepository = stockRepository;
+    this.salesPersonRepository = salesPersonRepository;
+    this.saleRepository = saleRepository;
+    this.returnsRepository = returnsRepository;
+  }
+
+  @Override
+  public OrderResponse createOrder(OrderMasterRequest orderMasterRequest) {
+    List<OrderDetailsRequest> orderDetailsRequestList = orderMasterRequest.getOrderDetails();
+    OrderMaster orderMaster = new OrderMaster();
+    Long orderId = getOrderId();
+    orderMaster.setOrderId(orderId);
+    orderMaster.setCustomer(getCustomer(orderMasterRequest.getCustomer().getValue()));
+    orderMaster.setCompanyName(orderMasterRequest.getCompanyName());
+    if (orderMasterRequest.getSupplier() != null && !orderMasterRequest.getSupplier().isEmpty()) {
+      orderMaster.setSupplier(getSupplier(orderMasterRequest.getSupplierId()));
     }
-
-    @Override
-    public AddOrderMasterResponse createOrder(OrderMasterRequest orderMasterRequest) {
-        List<OrderDetailsRequest> orderDetailsRequestList = orderMasterRequest.getOrders();
-        OrderMaster orderMaster = new OrderMaster();
-        orderMaster.setSalesPersonName(orderMasterRequest.getSalesPersonName());
-        orderMaster.setSupplierCode(orderMasterRequest.getSupplierCode());
-        orderMaster.setCustomerName(orderMasterRequest.getCustomerName());
-        orderMaster.setPhoneNumber(orderMasterRequest.getPhoneNumber());
-        orderMaster.setCustomerStatus(orderMasterRequest.getCustomerStatus());
-        orderMaster.setCustomerType(orderMasterRequest.getCustomerType());
-        orderMaster.setCompanyName(orderMasterRequest.getCompanyName());
-        orderMaster.setOrderDate(DateUtil.getZoneDateTime(orderMasterRequest.getOrderDate() + "T00:00:00"));
-        orderMaster.setCreditTerm(DateUtil.getZoneDateTime(orderMasterRequest.getCreditTerm() + "T00:00:00"));
-        orderMaster.setOrderId(ZonedDateTime.now().toString());
-        OrderMaster saveOrderMaster = orderMasterRepository.save(orderMaster);
-        List<GetOrderDetailsResponse> getOrderDetailsResponses = addOrderMaster(saveOrderMaster, orderDetailsRequestList);
-        return AddOrderMasterResponse.from("Order create successfully", orderMaster, getOrderDetailsResponses);
+    if (orderMasterRequest.getBranch() != null && !orderMasterRequest.getBranch().isEmpty()) {
+      orderMaster.setBranch(getBranch(orderMasterRequest.getBranchCode()));
     }
+    orderMaster.setCustomerType(CustomerType.fromName(orderMasterRequest.getCustomerType().getName()));
+    orderMaster.setOrderDate(DateUtil.getZoneDateTime(orderMasterRequest.getOrderDate() + "T00:00:00"));
+    orderMaster.setDeliveryDate(DateUtil.getZoneDateTime(orderMasterRequest.getDeliveryDate() + "T00:00:00"));
+    if (orderMasterRequest.getCreditTerm() != null && !orderMasterRequest.getCreditTerm().isEmpty()) {
+      orderMaster.setCreditTerm(DateUtil.getZoneDateTime(orderMasterRequest.getCreditTerm() + "T00:00:00"));
+    } else {
+      orderMaster.setCreditTerm(null);
+    }
+    orderMaster.setChallan(orderMasterRequest.getChallanNo());
+    orderMaster.setAddress(orderMasterRequest.getAddress());
+    orderMaster.setOrderBy(getSalesPerson(orderMasterRequest.getOrderBy().getValue()));
+    orderMaster.setCreatedBy(getUser(orderMasterRequest.getUser()));
+    OrderMaster master = orderMasterRepository.save(orderMaster);
+    List<OrderDetailsResponse> orderDetailsResponses = addOrderDetails(master, orderDetailsRequestList);
+    return OrderResponse.from("Order create successfully", orderMaster, orderDetailsResponses);
+  }
 
-    @Override
-    public List<OrderBillsResponse> getAllBills() {
-        List<OrderBillsResponse> orderBillsResponses = new ArrayList<>();
-        List<OrderMaster> orderMasters = orderMasterRepository.findAll();
-        for (OrderMaster master : orderMasters) {
-            List<OrderDetails> orderDetails = orderDetailsRepository.findAllByOrderId(master);
-            double bills = 0;
-            for (OrderDetails details : orderDetails) {
-                if (details.getBill() != null) {
-                    bills = bills + details.getBill();
-                }
-            }
-            OrderBillsResponse orderBillsResponse = OrderBillsResponse.from(master, bills);
-            orderBillsResponses.add(orderBillsResponse);
+  private List<OrderDetailsResponse> addOrderDetails(OrderMaster orderId, List<OrderDetailsRequest> orderDetailsRequestList) {
+    List<OrderDetailsResponse> orderDetailsResponses = new ArrayList<>();
+    List<OrderDetails> orderDetailsList = new ArrayList<>();
+    List<CommonRequest> commonRequests = new ArrayList<>();
+    for (OrderDetailsRequest orderDetailsRequest : orderDetailsRequestList) {
+      OrderDetails orderDetails = new OrderDetails();
+      orderDetails.setOrder(orderId);
+      orderDetails.setProduct(getProduct(orderDetailsRequest.getProduct().getValue()));
+      if (orderDetailsRequest.getSale() != null && !orderDetailsRequest.getSale().isEmpty()) {
+        orderDetails.setSale(getSale(orderDetailsRequest.getSaleCode()));
+      }
+      orderDetails.setVat(orderDetailsRequest.getVat());
+      orderDetails.setUom(UOM.fromName(orderDetailsRequest.getUom().getName()));
+      orderDetails.setQuantity(orderDetailsRequest.getQuantity());
+      orderDetails.setDiscount(orderDetailsRequest.getDiscount());
+      orderDetails.setRemarks(orderDetailsRequest.getRemarks());
+      orderDetails.setPrice(orderDetailsRequest.getPrice());
+      orderDetails.setTotalPrice(getTotal(orderDetailsRequest));
+      orderDetails.setShipment(getShipment(orderDetailsRequest.getShipment().getValue()));
+      orderDetails.setSale(getSale(orderDetailsRequest.getSaleCode()));
+      orderDetails.setStatus(OrderStatus.PENDING);
+      orderDetailsList.add(orderDetails);
+      commonRequests.add(orderDetailsRequest.getShipment());
+      orderDetailsResponses.add(OrderDetailsResponse.from(orderDetails));
+    }
+    orderDetailsRepository.saveAll(orderDetailsList);
+    for (int i = 0; i < orderDetailsList.size(); i++) {
+      updateStock(orderDetailsList.get(i), commonRequests.get(i));
+    }
+    return orderDetailsResponses;
+  }
+
+  private ImportMaster getShipment(String shipment) {
+    Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
+    if (optionalImportMaster.isPresent()) {
+      return optionalImportMaster.get();
+    } else {
+      throw new RequestValidationException("Shipment not exist");
+    }
+  }
+
+  private SalesPerson getSalesPerson(String salesPersonId) {
+    Optional<SalesPerson> optionalSalesPerson = salesPersonRepository.findBySalesPersonId(salesPersonId);
+    if (optionalSalesPerson.isPresent()) {
+      return optionalSalesPerson.get();
+    } else {
+      throw new RequestValidationException("Sales person did not exist");
+    }
+  }
+
+  @Override
+  public ChallanResponse getCustomerChallan(String customer) {
+    Optional<OrderMaster> optionalChallan = orderMasterRepository.findFirstByCustomerOrderByCreatedOnDesc(getCustomer(customer));
+    return optionalChallan.map(ChallanResponse::from).orElse(null);
+  }
+
+  @Override
+  public UomAndAvailableResponse getUomAndAvailable(String product, String shipment) {
+    Optional<ImportDetails> optionalImportDetails = importDetailsRepository.
+            findByProductAndImportMaster(getProduct(product), getImportMaster(shipment));
+    if (optionalImportDetails.isEmpty()) {
+      return null;
+    } else {
+      if (optionalImportDetails.get().getUom().equals(UOM.KG_LT)) {
+        return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getKgLt());
+      } else if (optionalImportDetails.get().getUom().equals(UOM.PIECE)) {
+        return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getPiece());
+      } else {
+        return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getCartoon());
+      }
+    }
+  }
+
+  @Override
+  public AllBillsResponse getBills() {
+    List<OrderMaster> orderMasters = (List<OrderMaster>) orderMasterRepository.findAll();
+    List<SingleBillResponse> singleBillResponses = new ArrayList<>();
+    for (OrderMaster orderMaster : orderMasters) {
+      singleBillResponses.add(SingleBillResponse.from(orderMaster));
+    }
+    return AllBillsResponse.from(singleBillResponses);
+  }
+
+  @Override
+  public BillsDetailsResponse getBillsDetails(Long orderId) {
+    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(orderId);
+    if (optionalOrderMaster.isPresent()) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(optionalOrderMaster.get());
+      List<SingleBillsDetailsResponse> singleBillsDetailsResponses = new ArrayList<>();
+      for (OrderDetails orderDetails : orderDetailsList) {
+        singleBillsDetailsResponses.add(SingleBillsDetailsResponse.from(orderDetails));
+      }
+      return BillsDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get()), singleBillsDetailsResponses);
+    } else {
+      throw new RequestValidationException("Order id not found");
+    }
+  }
+
+  @Override
+  public VatDetailsResponse getVatDetails(Long orderId) {
+    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(orderId);
+    if (optionalOrderMaster.isPresent()) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(optionalOrderMaster.get());
+      List<SingleVatDetailsResponse> singleVatDetailsResponses = new ArrayList<>();
+      for (OrderDetails orderDetails : orderDetailsList) {
+        singleVatDetailsResponses.add(SingleVatDetailsResponse.from(orderDetails));
+      }
+      return VatDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get()), singleVatDetailsResponses);
+    } else {
+      throw new RequestValidationException("Order id not found");
+    }
+  }
+
+  @Override
+  public LastPriceResponse getProductLastPrice(String customer, String product) {
+    List<OrderMaster> orderMasters = orderMasterRepository.findByCustomerOrderByCreatedOnDesc(getCustomer(customer));
+    for (OrderMaster orderMaster : orderMasters) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
+      for (OrderDetails orderDetails : orderDetailsList) {
+        if (orderDetails.getProduct().getProductId().equals(product)) {
+          return LastPriceResponse.from(orderDetails.getPrice());
         }
-        return orderBillsResponses;
+      }
     }
+    return null;
+  }
 
-    @Override
-    public List<OrderBillsResponse> getAllBillsByTime(String start, String end) {
-        List<OrderBillsResponse> orderBillsResponses = new ArrayList<>();
-        List<OrderMaster> orderMasters = orderMasterRepository.findAllByCreatedOnBetween(
-                DateUtil.getZoneDateTime(start + "T00:00:00"),
-                DateUtil.getZoneDateTime(end + "T00:00:00"));
-        for (OrderMaster master : orderMasters) {
-            List<OrderDetails> orderDetails = orderDetailsRepository.findAllByOrderId(master);
-            double bills = 0;
-            for (OrderDetails details : orderDetails) {
-                if (details.getBill() != null) {
-                    bills = bills + details.getBill();
-                }
-            }
-            OrderBillsResponse orderBillsResponse = OrderBillsResponse.from(master, bills);
-            orderBillsResponses.add(orderBillsResponse);
+  @Override
+  public DailyOrderResponse getDailyOrder(String date, String type) {
+    System.out.println(date);
+    String startDate = DateUtil.getFormattedDate(ZonedDateTime.now());
+    HashMap<String, String> uniqueCustomers = new HashMap<>();
+    List<String> uniqueName = new ArrayList<>();
+    List<OrderMaster> orderMasters;
+    if (date != null && !date.isEmpty()) {
+      if (type.equals("Order")) {
+        orderMasters = orderMasterRepository.findByOrderDateBetween(
+                DateUtil.getZoneDateTime(date + "T00:00:00"), DateUtil.getZoneDateTime(date + "T23:59:59"));
+      } else {
+        orderMasters = orderMasterRepository.findByDeliveryDateBetween(
+                DateUtil.getZoneDateTime(date + "T00:00:00"), DateUtil.getZoneDateTime(date + "T23:59:59"));
+      }
+    } else {
+      if (type.equals("Order")) {
+        orderMasters = orderMasterRepository.findByOrderDateBetween(
+                DateUtil.getZoneDateTime(startDate + "T00:00:00"), DateUtil.getZoneDateTime(startDate + "T23:59:59"));
+      } else {
+        orderMasters = orderMasterRepository.findByDeliveryDateBetween(
+                DateUtil.getZoneDateTime(startDate + "T00:00:00"), DateUtil.getZoneDateTime(startDate + "T23:59:59"));
+      }
+    }
+    List<DailyOrderProductsResponse> productsResponses = new ArrayList<>();
+    for (OrderMaster orderMaster : orderMasters) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
+      for (OrderDetails orderDetails : orderDetailsList) {
+        productsResponses.add(DailyOrderProductsResponse.from(orderDetails, orderMaster));
+      }
+      if (!uniqueCustomers.containsKey(orderMaster.getCustomer().getCustomerName())) {
+        uniqueCustomers.put(orderMaster.getCustomer().getCustomerName(), orderMaster.getCustomer().getCustomerName());
+      }
+    }
+    for (String string : uniqueCustomers.keySet()) {
+      uniqueName.add(uniqueCustomers.get(string));
+    }
+    return DailyOrderResponse.from(productsResponses, uniqueName);
+  }
+
+  @Override
+  public DailyOrderShortResponse getDailyOrderShort(String date, String type) {
+    String startDate = DateUtil.getFormattedDate(ZonedDateTime.now());
+    HashMap<String, Double> uniqueProducts = new HashMap<>();
+    List<OrderMaster> orderMasters;
+    if (date != null && !date.isEmpty()) {
+      if (type.equals("Order")) {
+        orderMasters = orderMasterRepository.findByOrderDateBetween(
+                DateUtil.getZoneDateTime(date + "T00:00:00"), DateUtil.getZoneDateTime(date + "T23:59:59"));
+      } else {
+        orderMasters = orderMasterRepository.findByDeliveryDateBetween(
+                DateUtil.getZoneDateTime(date + "T00:00:00"), DateUtil.getZoneDateTime(date + "T23:59:59"));
+      }
+    } else {
+      if (type.equals("Order")) {
+        orderMasters = orderMasterRepository.findByOrderDateBetween(
+                DateUtil.getZoneDateTime(startDate + "T00:00:00"), DateUtil.getZoneDateTime(startDate + "T23:59:59"));
+      } else {
+        orderMasters = orderMasterRepository.findByDeliveryDateBetween(
+                DateUtil.getZoneDateTime(startDate + "T00:00:00"), DateUtil.getZoneDateTime(startDate + "T23:59:59"));
+      }
+    }
+    List<DailyShortResponse> dailyShortResponses = new ArrayList<>();
+    for (OrderMaster orderMaster : orderMasters) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
+      for (OrderDetails orderDetails : orderDetailsList) {
+        if (!uniqueProducts.containsKey(orderDetails.getProduct().getProductId())) {
+          uniqueProducts.put(orderDetails.getProduct().getProductName(), orderDetails.getQuantity());
+        } else {
+          uniqueProducts.put(orderDetails.getProduct().getProductName(),
+                  uniqueProducts.get(orderDetails.getProduct().getProductName() + orderDetails.getQuantity()));
         }
-        return orderBillsResponses;
+      }
     }
+    for (String string : uniqueProducts.keySet()) {
+      dailyShortResponses.add(DailyShortResponse.from(string, uniqueProducts.get(string)));
+    }
+    return DailyOrderShortResponse.from(dailyShortResponses);
+  }
 
-    private List<GetOrderDetailsResponse> addOrderMaster(OrderMaster saveOrderMaster, List<OrderDetailsRequest> orderDetailsRequestList) {
-        List<GetOrderDetailsResponse> orderDetailsResponses = new ArrayList<>();
-        for (OrderDetailsRequest orderDetailsRequest : orderDetailsRequestList) {
-            System.out.println(orderDetailsRequest.getCartonQuantity());
-            OrderDetails orderDetails = new OrderDetails();
-            orderDetails.setProductId(orderDetailsRequest.getProductId());
-            orderDetails.setProductName(orderDetailsRequest.getProductName());
-            orderDetails.setCartonQuantity(orderDetailsRequest.getCartonQuantity());
-            orderDetails.setCartonWeight(orderDetailsRequest.getCartonWeight());
-            orderDetails.setCartonSellingPrice(orderDetailsRequest.getCartonPrice());
-            orderDetails.setPieceQuantity(orderDetailsRequest.getPieceQuantity());
-            orderDetails.setPieceWeight(orderDetailsRequest.getPieceWeight());
-            orderDetails.setPieceSellingPrice(orderDetailsRequest.getPiecePrice());
-            orderDetails.setKgLtQuantity(orderDetailsRequest.getKgLtQuantity());
-            orderDetails.setKgLtSellingPrice(orderDetailsRequest.getKgLtPrice());
-            orderDetails.setTax(orderDetailsRequest.getTax());
-            orderDetails.setVat(orderDetailsRequest.getVat());
-            List<OrderCuttingRequest> cuttings = orderDetailsRequest.getCutting();
-            Double bill;
-            List<GetOrderCuttingResponse> cuttingResponses = new ArrayList<>();
-            if (!Objects.isNull(cuttings)) {
-                cuttingResponses = addCutting(saveOrderMaster, cuttings);
-                bill = calculateBillFromCutting(cuttings);
-            } else {
-                bill = calculateBill(orderDetailsRequest);
-            }
-            orderDetails.setBill(bill);
-            orderDetails.setOrderId(saveOrderMaster);
-            orderDetailsRepository.save(orderDetails);
-            orderDetailsResponses.add(GetOrderDetailsResponse.from(orderDetails, cuttingResponses));
+  @Override
+  public OrderTableResponse getTable() {
+    List<OrderMaster> orderMasters = (List<OrderMaster>) orderMasterRepository.findAll();
+    List<SingleOrderTableResponse> singleOrderTableResponses = new ArrayList<>();
+    for (OrderMaster orderMaster : orderMasters) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
+      for (OrderDetails orderDetails : orderDetailsList) {
+        singleOrderTableResponses.add(SingleOrderTableResponse.from(orderMaster, orderDetails));
+      }
+    }
+    return OrderTableResponse.from(singleOrderTableResponses);
+  }
+
+  @Override
+  public EditOrderResponse editOrder(Long orderId, List<EditOrderRequest> updateOrderRequest) {
+    List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(getOrder(orderId));
+    List<OrderDetails> orderDetails1 = new ArrayList<>();
+    for (OrderDetails orderDetail : orderDetailsList) {
+      EditOrderRequest matchingEditRequest = findMatchingEditRequest(updateOrderRequest,
+              orderDetail.getProduct().getProductName());
+      if (matchingEditRequest != null) {
+        updateStockWhenEdit(orderDetail, matchingEditRequest);
+        orderDetail.setQuantity(matchingEditRequest.getQuantity());
+        orderDetail.setTotalPrice(matchingEditRequest.getTotal());
+        orderDetails1.add(orderDetail);
+      }
+    }
+    orderDetailsRepository.saveAll(orderDetails1);
+    return EditOrderResponse.from();
+  }
+
+  @Override
+  public ReturnDetailsResponse getReturn(Long orderId) {
+    List<Returns> returnsList = returnsRepository.findByOrder(getOrder(orderId));
+    List<SingleReturnResponse> singleReturnResponses = new ArrayList<>();
+    double piece = 0.0;
+    double cartoon = 0.0;
+    double kgLt = 0.0;
+    for (Returns returns : returnsList) {
+      piece = piece + returns.getPiece();
+      cartoon = cartoon + returns.getCartoon();
+      kgLt = kgLt + returns.getKgLt();
+      singleReturnResponses.add(SingleReturnResponse.from(returns));
+    }
+    if (!returnsList.isEmpty()) {
+      return ReturnDetailsResponse.from(returnsList.get(0).getDeliveryMan(), returnsList.get(0).getCreatedOn(),
+              piece, cartoon, kgLt, singleReturnResponses);
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public AllPendingOrdersResponse getPendingOrder() {
+    List<OrderMaster> orderMasters = (List<OrderMaster>) orderMasterRepository.findAll();
+    List<PendingOrderResponse> pendingOrderResponseList = new ArrayList<>();
+    for (OrderMaster orderMaster : orderMasters) {
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findByOrderAndStatus(orderMaster, OrderStatus.PENDING);
+      for (OrderDetails orderDetails : orderDetailsList) {
+        pendingOrderResponseList.add(PendingOrderResponse.from(orderMaster, orderDetails));
+      }
+    }
+    return AllPendingOrdersResponse.from(pendingOrderResponseList);
+  }
+
+  @Override
+  public OrderRequisitionResponse updateOrderStatus(List<UpdateOrderRequest> updateOrderRequestList) {
+    List<RequisitionResponse> requisitionResponses = new ArrayList<>();
+    double totalPiece = 0.0;
+    double totalKg = 0.0;
+    double totalCartoon = 0.0;
+    for (UpdateOrderRequest updateOrderRequest : updateOrderRequestList) {
+      Optional<OrderDetails> orderDetails = orderDetailsRepository.findByOrderAndProduct
+              (getOrder(updateOrderRequest.getOrderId()), getProduct(updateOrderRequest.getProductId()));
+      if (orderDetails.isPresent()) {
+        Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
+                orderDetails.get().getProduct(), orderDetails.get().getShipment());
+        if (importDetails.isPresent()) {
+          if (importDetails.get().getUom().equals(UOM.KG_LT)) {
+            Double cartoon = orderDetails.get().getQuantity() / importDetails.get().getUnitCartoon();
+            Double piece = orderDetails.get().getQuantity() / importDetails.get().getUnitPiece();
+            totalCartoon = totalCartoon + cartoon;
+            totalPiece = totalPiece + piece;
+            totalKg = totalKg + orderDetails.get().getQuantity();
+            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
+                    piece, cartoon, orderDetails.get().getQuantity()));
+
+          } else if (importDetails.get().getUom().equals(UOM.PIECE)) {
+            Double cartoon = (orderDetails.get().getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon();
+            Double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
+            totalCartoon = totalCartoon + cartoon;
+            totalPiece = totalPiece + orderDetails.get().getQuantity();
+            totalKg = totalKg + kgLt;
+            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
+                    orderDetails.get().getQuantity(), cartoon, kgLt));
+          } else {
+            Double piece = (orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon()) / importDetails.get().getUnitPiece();
+            Double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
+            totalCartoon = totalCartoon + orderDetails.get().getQuantity();
+            totalPiece = totalPiece + piece;
+            totalKg = totalKg + kgLt;
+            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
+                    piece, orderDetails.get().getQuantity(), kgLt));
+          }
+        } else {
+          throw new RequestValidationException("Shipment is not exist");
         }
-
-        return orderDetailsResponses;
+        orderDetails.get().setStatus(OrderStatus.DELIVERED);
+        orderDetailsRepository.save(orderDetails.get());
+      } else {
+        throw new RequestValidationException("Order is not exist");
+      }
     }
+    return OrderRequisitionResponse.from(requisitionResponses, totalKg, totalCartoon, totalPiece);
+  }
 
-    private List<GetOrderCuttingResponse> addCutting(OrderMaster saveOrderMaster, List<OrderCuttingRequest> cuttings) {
-        List<GetOrderCuttingResponse> cuttingResponses = new ArrayList<>();
-        for (OrderCuttingRequest cuttingRequest : cuttings) {
-            OrderCutting orderCutting = new OrderCutting();
-            orderCutting.setCartonNo(cuttingRequest.getCartonNo());
-            orderCutting.setCartonQuantity(cuttingRequest.getCartoonQuantity());
-            orderCutting.setPieceInCarton(cuttingRequest.getCartoonPiece());
-            orderCutting.setPrice(cuttingRequest.getSellingPrice());
-            orderCutting.setOrderId(saveOrderMaster);
-            orderCuttingRepository.save(orderCutting);
-            cuttingResponses.add(GetOrderCuttingResponse.from(orderCutting));
+  private EditOrderRequest findMatchingEditRequest(List<EditOrderRequest> editOrderRequests, String productName) {
+    for (EditOrderRequest editRequest : editOrderRequests) {
+      if (editRequest.getProduct().equals(productName)) {
+        return editRequest;
+      }
+    }
+    return null;
+  }
+
+  private OrderMaster getOrder(Long order) {
+    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(order);
+    if (optionalOrderMaster.isPresent()) {
+      return optionalOrderMaster.get();
+    } else {
+      throw new RequestValidationException("Order id is not found");
+    }
+  }
+
+  private ImportMaster getImportMaster(String shipment) {
+    Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
+    if (optionalImportMaster.isEmpty()) {
+      throw new RequestValidationException("Shipment not exist");
+    } else {
+      return optionalImportMaster.get();
+    }
+  }
+
+  private Long getOrderId() {
+    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findFirstByOrderByOrderIdDesc();
+    Date currentDate = new Date();
+    SimpleDateFormat yearFormat = new SimpleDateFormat("yy");
+    String currentYear = yearFormat.format(currentDate);
+    if (optionalOrderMaster.isPresent()) {
+      String orderIdYear = String.valueOf(optionalOrderMaster.get().getOrderId()).substring(0, 2);
+      if (!orderIdYear.equals(currentYear)) {
+        return Long.parseLong(currentYear + "000001");
+      } else {
+        return optionalOrderMaster.get().getOrderId() + 1;
+      }
+    } else {
+      return Long.parseLong(currentYear + "000001");
+    }
+  }
+
+  private Customer getCustomer(String customer) {
+    Optional<Customer> optionalCustomer = customerRepository.findByCustomerId(customer);
+    if (optionalCustomer.isPresent()) {
+      return optionalCustomer.get();
+    } else {
+      throw new RequestValidationException("Customer is not exist");
+    }
+  }
+
+  private Supplier getSupplier(String supplier) {
+    return null;
+  }
+
+  private Branch getBranch(String branch) {
+    return null;
+  }
+
+  private Product getProduct(String product) {
+    Optional<Product> optionalProduct = productRepository.findByProductId(product);
+    if (optionalProduct.isEmpty()) {
+      throw new RequestValidationException("Product not exist");
+    } else {
+      return optionalProduct.get();
+    }
+  }
+
+  private Sale getSale(String sale) {
+    Optional<Sale> optionalSale = saleRepository.findBySaleCode(sale);
+    if (optionalSale.isPresent()) {
+      return optionalSale.get();
+    } else {
+      throw new RequestValidationException("Sale not exist");
+    }
+  }
+
+  private Double getTotal(OrderDetailsRequest orderDetailsRequest) {
+    if (orderDetailsRequest.getDiscount() != null) {
+      return (orderDetailsRequest.getQuantity() - orderDetailsRequest.getDiscount()) *
+              orderDetailsRequest.getPrice();
+    } else {
+      return (orderDetailsRequest.getQuantity() *
+              orderDetailsRequest.getPrice());
+    }
+  }
+
+  private User getUser(String createdBy) {
+    Optional<User> optionalUser = userRepository.findByEmail(createdBy);
+    if (optionalUser.isEmpty()) {
+      throw new RequestValidationException("User not exist");
+    } else {
+      return optionalUser.get();
+    }
+  }
+
+  private void updateStock(OrderDetails orderDetails, CommonRequest commonRequest) {
+    Optional<ImportDetails> optionalImportDetails = importDetailsRepository.findByProductAndImportMaster(
+            orderDetails.getProduct(), getImportMaster(commonRequest.getValue()));
+    if (optionalImportDetails.isPresent()) {
+      UOM uom = UOM.fromName(optionalImportDetails.get().getUom().getName());
+      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG_LT)) {
+        Double kgLt = optionalImportDetails.get().getKgLt() - orderDetails.getQuantity();
+
+        Double cartoon = optionalImportDetails.get().getCartoon() - (orderDetails.getQuantity() /
+                optionalImportDetails.get().getUnitCartoon());
+
+        Double piece = optionalImportDetails.get().getPiece() - (orderDetails.getQuantity() /
+                optionalImportDetails.get().getUnitPiece());
+
+        updateStockData(orderDetails.getQuantity(), orderDetails.getProduct());
+        optionalImportDetails.get().setCartoon(cartoon);
+        optionalImportDetails.get().setPiece(piece);
+        optionalImportDetails.get().setKgLt(kgLt);
+        importDetailsRepository.save(optionalImportDetails.get());
+      } else if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.PIECE)) {
+        Double piece = optionalImportDetails.get().getPiece() - (orderDetails.getQuantity());
+
+        Double cartoon = optionalImportDetails.get().getCartoon() - ((orderDetails.getQuantity() *
+                optionalImportDetails.get().getUnitPiece()) / optionalImportDetails.get().getUnitCartoon());
+
+        Double kgLt = optionalImportDetails.get().getKgLt() - (orderDetails.getQuantity() *
+                optionalImportDetails.get().getUnitPiece());
+
+        updateStockData(orderDetails.getQuantity(), orderDetails.getProduct());
+        optionalImportDetails.get().setCartoon(cartoon);
+        optionalImportDetails.get().setPiece(piece);
+        optionalImportDetails.get().setKgLt(kgLt);
+        importDetailsRepository.save(optionalImportDetails.get());
+      } else {
+        Double cartoon = optionalImportDetails.get().getCartoon() - orderDetails.getQuantity();
+
+        Double piece = optionalImportDetails.get().getPiece() -
+                ((orderDetails.getQuantity() * optionalImportDetails.get().getUnitCartoon())
+                        / optionalImportDetails.get().getUnitPiece());
+
+        Double kgLt = optionalImportDetails.get().getKgLt() - (orderDetails.getQuantity() *
+                optionalImportDetails.get().getUnitCartoon());
+
+        updateStockData(orderDetails.getQuantity(), orderDetails.getProduct());
+        optionalImportDetails.get().setCartoon(cartoon);
+        optionalImportDetails.get().setPiece(piece);
+        optionalImportDetails.get().setKgLt(kgLt);
+        importDetailsRepository.save(optionalImportDetails.get());
+      }
+    } else {
+      throw new RequestValidationException("Product is not found");
+    }
+  }
+
+  private void updateStockData(Double quantity, Product product) {
+    Optional<Stock> optionalStock = stockRepository.findByProduct(product);
+    if (optionalStock.isEmpty()) {
+      throw new RequestValidationException("Stock is not found for this product");
+    } else {
+      optionalStock.get().setTotalSell(optionalStock.get().getTotalSell() + quantity);
+      optionalStock.get().setInStock(optionalStock.get().getInStock() - quantity);
+      stockRepository.save(optionalStock.get());
+    }
+  }
+
+  private void updateStockWhenEdit(OrderDetails orderDetails, EditOrderRequest request) {
+    Optional<ImportDetails> optionalImportDetails = importDetailsRepository.findByProductAndImportMaster(
+            orderDetails.getProduct(), getImportMaster(orderDetails.getShipment().getShipmentNo()));
+    if (optionalImportDetails.isPresent()) {
+      UOM uom = UOM.fromName(optionalImportDetails.get().getUom().getName());
+      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG_LT)) {
+        if (orderDetails.getQuantity() < request.getQuantity()) {
+          Double kgLt = (optionalImportDetails.get().getKgLt()) - (request.getQuantity() - orderDetails.getQuantity());
+          Double cartoon = (optionalImportDetails.get().getCartoon()) - ((request.getQuantity() - orderDetails.getQuantity()) /
+                  optionalImportDetails.get().getUnitCartoon());
+          Double piece = (optionalImportDetails.get().getPiece()) - ((request.getQuantity() - orderDetails.getQuantity()) /
+                  optionalImportDetails.get().getUnitPiece());
+          updateStockData((request.getQuantity() - orderDetails.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        } else {
+          Double kgLt = (optionalImportDetails.get().getKgLt()) + (orderDetails.getQuantity() - request.getQuantity());
+          Double cartoon = (optionalImportDetails.get().getCartoon()) + ((orderDetails.getQuantity() - request.getQuantity()) /
+                  optionalImportDetails.get().getUnitCartoon());
+          Double piece = (optionalImportDetails.get().getPiece()) + ((orderDetails.getQuantity() - request.getQuantity()) /
+                  optionalImportDetails.get().getUnitPiece());
+          updateStockDataWhenEdit((orderDetails.getQuantity() - request.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
         }
-        return cuttingResponses;
-    }
+      } else if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.PIECE)) {
+        if (orderDetails.getQuantity() < request.getQuantity()) {
+          Double piece = optionalImportDetails.get().getPiece() - (request.getQuantity() - orderDetails.getQuantity());
 
-    private Double calculateBillFromCutting(List<OrderCuttingRequest> cuttings) {
-        Double bill = null;
-        for (OrderCuttingRequest orderCuttingRequest : cuttings) {
-            bill = orderCuttingRequest.getCartoonQuantity() * orderCuttingRequest.getSellingPrice();
+          Double cartoon = optionalImportDetails.get().getCartoon() - (((request.getQuantity() - orderDetails.getQuantity()) *
+                  optionalImportDetails.get().getUnitPiece()) / optionalImportDetails.get().getUnitCartoon());
+
+          Double kgLt = optionalImportDetails.get().getKgLt() - ((request.getQuantity() - orderDetails.getQuantity()) *
+                  optionalImportDetails.get().getUnitPiece());
+
+          updateStockData((request.getQuantity() - orderDetails.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        } else {
+          Double piece = optionalImportDetails.get().getPiece() + (orderDetails.getQuantity() - request.getQuantity());
+
+          Double cartoon = optionalImportDetails.get().getCartoon() + (((orderDetails.getQuantity() - request.getQuantity()) *
+                  optionalImportDetails.get().getUnitPiece()) / optionalImportDetails.get().getUnitCartoon());
+
+          Double kgLt = optionalImportDetails.get().getKgLt() + ((orderDetails.getQuantity() - request.getQuantity()) *
+                  optionalImportDetails.get().getUnitPiece());
+
+          updateStockDataWhenEdit((orderDetails.getQuantity() - request.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
         }
-        return bill;
-    }
+      } else {
+        if (orderDetails.getQuantity() < request.getQuantity()) {
+          Double cartoon = optionalImportDetails.get().getCartoon() - (request.getQuantity() - orderDetails.getQuantity());
 
-    private Double calculateBill(OrderDetailsRequest orderDetailsRequest) {
-        return (orderDetailsRequest.getCartonWeight() * orderDetailsRequest.getCartonPrice()) +
-                (orderDetailsRequest.getPieceWeight() * orderDetailsRequest.getPiecePrice()) +
-                (orderDetailsRequest.getKgLtQuantity() * orderDetailsRequest.getKgLtPrice());
+          Double piece = optionalImportDetails.get().getPiece() -
+                  (((request.getQuantity() - orderDetails.getQuantity()) * optionalImportDetails.get().getUnitCartoon())
+                          / optionalImportDetails.get().getUnitPiece());
+
+          Double kgLt = optionalImportDetails.get().getKgLt() - ((request.getQuantity() - orderDetails.getQuantity()) *
+                  optionalImportDetails.get().getUnitCartoon());
+
+          updateStockData((request.getQuantity() - orderDetails.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        } else {
+          Double cartoon = optionalImportDetails.get().getCartoon() + (orderDetails.getQuantity() - request.getQuantity());
+
+          Double piece = optionalImportDetails.get().getPiece() +
+                  (((orderDetails.getQuantity() + request.getQuantity()) * optionalImportDetails.get().getUnitCartoon())
+                          / optionalImportDetails.get().getUnitPiece());
+
+          Double kgLt = optionalImportDetails.get().getKgLt() + ((orderDetails.getQuantity() + request.getQuantity()) *
+                  optionalImportDetails.get().getUnitCartoon());
+
+          updateStockDataWhenEdit((orderDetails.getQuantity() - request.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        }
+      }
+    } else {
+      throw new RequestValidationException("Product is not found");
     }
+  }
+
+  @Transactional
+  private void updateStockDataWhenEdit(Double quantity, Product product) {
+    Optional<Stock> optionalStock = stockRepository.findByProduct(product);
+    if (optionalStock.isEmpty()) {
+      throw new RequestValidationException("Stock is not found for this product");
+    } else {
+      optionalStock.get().setProduct(optionalStock.get().getProduct());
+      optionalStock.get().setTotalSell(optionalStock.get().getTotalSell() - quantity);
+      optionalStock.get().setInStock(optionalStock.get().getInStock() + quantity);
+      stockRepository.save(optionalStock.get());
+    }
+  }
+
+  private User setUser(String user) {
+    return null;
+  }
 }
