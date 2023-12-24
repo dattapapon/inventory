@@ -21,17 +21,17 @@ public class SecurityConfig {
     return httpSecurity.build();
   }
 
-  @Bean
-  public CorsFilter corsFilter() {
-    CorsConfiguration config = new CorsConfiguration();
-//        config.addAllowedOrigin("https://tanisatubabd.com");
-    config.addAllowedOrigin("http://localhost:3000");
-    config.addAllowedHeader("*");
-    config.addAllowedMethod(HttpMethod.GET);
-    config.addAllowedMethod(HttpMethod.POST);
-    config.addAllowedMethod(HttpMethod.PUT);
-    config.addAllowedMethod(HttpMethod.DELETE);
-    config.addAllowedMethod(HttpMethod.OPTIONS);
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedOrigin("https://tanisatubabd.com");
+//        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod(HttpMethod.GET);
+        config.addAllowedMethod(HttpMethod.POST);
+        config.addAllowedMethod(HttpMethod.PUT);
+        config.addAllowedMethod(HttpMethod.DELETE);
+        config.addAllowedMethod(HttpMethod.OPTIONS);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
