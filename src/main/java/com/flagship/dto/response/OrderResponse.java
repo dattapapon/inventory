@@ -22,7 +22,7 @@ public class OrderResponse {
   private CustomerType customerType;
   private ZonedDateTime orderDate;
   private ZonedDateTime deliveryDate;
-  private ZonedDateTime creditTerm;
+  private Integer creditTerm;
   private Integer challanNo;
   private String orderBy;
   private List<OrderDetailsResponse> orderDetailsResponses;

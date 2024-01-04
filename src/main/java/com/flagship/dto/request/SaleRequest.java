@@ -23,9 +23,6 @@ public class SaleRequest implements RequestValidator {
   private String saleCode;
   @Valid
   @NotEmpty
-  private String saleName;
-  @Valid
-  @NotEmpty
   private String user;
 
   @Override

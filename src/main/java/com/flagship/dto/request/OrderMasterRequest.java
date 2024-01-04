@@ -18,10 +18,8 @@ public class OrderMasterRequest {
   @Valid
   @NotEmpty
   private String deliveryAddress;
-  private String supplier;
   private String supplierId;
-  private String branch;
-  private String branchCode;
+  private CommonRequest branch;
   @Valid
   @NotNull
   private CustomerType customerType;
@@ -31,7 +29,7 @@ public class OrderMasterRequest {
   @Valid
   @NotEmpty
   private String deliveryDate;
-  private String creditTerm;
+  private Integer creditTerm;
   private Integer challanNo;
   private String binNo;
   @Valid

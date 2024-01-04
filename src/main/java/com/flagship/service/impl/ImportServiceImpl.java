@@ -28,12 +28,14 @@ public class ImportServiceImpl implements ImportService {
   private final CategoriesRepository categoriesRepository;
   private final BrandRepository brandRepository;
   private final StockRepository stockRepository;
+  private final WastageRepository wastageRepository;
 
   @Autowired
   public ImportServiceImpl(ProductRepository productRepository, UserRepository userRepository,
                            ImportDetailsRepository importDetailsRepository, CountryRepository countryRepository,
                            ImportMasterRepository importMasterRepository, CategoriesRepository categoriesRepository,
-                           BrandRepository brandRepository, StockRepository stockRepository) {
+                           BrandRepository brandRepository, StockRepository stockRepository,
+                           WastageRepository wastageRepository) {
     this.productRepository = productRepository;
     this.userRepository = userRepository;
     this.importDetailsRepository = importDetailsRepository;
@@ -42,6 +44,7 @@ public class ImportServiceImpl implements ImportService {
     this.categoriesRepository = categoriesRepository;
     this.brandRepository = brandRepository;
     this.stockRepository = stockRepository;
+    this.wastageRepository = wastageRepository;
   }
 
   @Override
@@ -91,6 +94,56 @@ public class ImportServiceImpl implements ImportService {
     return AllImportResponse.from(importResponseList);
   }
 
+  @Override
+  public GetUomAndAvailableResponse getProductUomAndAvailable(String product, String shipment) {
+    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
+            getProducts(product), getImportMaster(shipment));
+    GetUomAndAvailableResponse getUomAndAvailableResponse = null;
+    if (importDetails.isPresent()) {
+      if (importDetails.get().getUom().equals(UOM.LT)) {
+        getUomAndAvailableResponse = GetUomAndAvailableResponse.from(importDetails.get().getUom(), importDetails.get().getKgLt());
+      }
+      if (importDetails.get().getUom().equals(UOM.KG)) {
+        getUomAndAvailableResponse = GetUomAndAvailableResponse.from(importDetails.get().getUom(), importDetails.get().getKgLt());
+      }
+      if (importDetails.get().getUom().equals(UOM.PIECE)) {
+        getUomAndAvailableResponse = GetUomAndAvailableResponse.from(importDetails.get().getUom(), importDetails.get().getPiece());
+      }
+      if (importDetails.get().getUom().equals(UOM.CARTOON)) {
+        getUomAndAvailableResponse = GetUomAndAvailableResponse.from(importDetails.get().getUom(), importDetails.get().getCartoon());
+      }
+    } else {
+      throw new RequestValidationException("Any record is not exist for Product: " + product + " and Shipment: " + shipment);
+    }
+    return getUomAndAvailableResponse;
+  }
+
+  @Override
+  public WastageDetailsResponse getWastage(String shipment) {
+    List<Wastage> wastageList = wastageRepository.findByShipment(getImportMaster(shipment));
+    List<SingleWastageSlipResponse> singleWastageSlipResponses = new ArrayList<>();
+    double piece = 0.0;
+    double cartoon = 0.0;
+    double kgLt = 0.0;
+    for (Wastage wastage : wastageList) {
+      piece = piece + wastage.getPiece();
+      cartoon = cartoon + wastage.getCartoon();
+      kgLt = kgLt + wastage.getKgLt();
+      singleWastageSlipResponses.add(SingleWastageSlipResponse.from(wastage));
+    }
+    if (!wastageList.isEmpty()) {
+      return WastageDetailsResponse.from(piece, cartoon, kgLt, singleWastageSlipResponses);
+    } else {
+      return null;
+    }
+  }
+
+  private ImportMaster getImportMaster(String shipment) {
+    Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
+    return optionalImportMaster.orElseThrow(() -> new RequestValidationException("ImportMaster not found for shipment: "
+            + shipment));
+  }
+
   private User getUser(String createdBy) {
     Optional<User> optionalUser = userRepository.findByEmail(createdBy);
     if (optionalUser.isEmpty()) {
@@ -122,9 +175,13 @@ public class ImportServiceImpl implements ImportService {
       importDetails.setCategories(getCategories(importDetailsRequest.getCategory().getValue()));
       importDetails.setBrand(getBrand(importDetailsRequest.getBrand().getValue()));
       importDetails.setCountry(getCountry(importDetailsRequest.getImportCountry().getValue()));
-      importDetails.setProduction(DateUtil.getZoneDateTime(importDetailsRequest.getProduction() + "T00:00:00"));
+      if (importDetailsRequest.getProduction() != null && !importDetailsRequest.getProduction().isEmpty()) {
+        importDetails.setProduction(DateUtil.getZoneDateTime(importDetailsRequest.getProduction() + "T00:00:00"));
+      }
       importDetails.setWarehouse(Warehouse.fromName(importDetailsRequest.getWarehouse().getName()));
-      importDetails.setExpire(DateUtil.getZoneDateTime(importDetailsRequest.getExpire() + "T00:00:00"));
+      if (importDetailsRequest.getExpire() != null && !importDetailsRequest.getExpire().isEmpty()) {
+        importDetails.setExpire(DateUtil.getZoneDateTime(importDetailsRequest.getExpire() + "T00:00:00"));
+      }
       importDetails.setUnitCartoon(importDetailsRequest.getKgLt() / importDetailsRequest.getCartoon());
       importDetails.setCartoon(importDetailsRequest.getCartoon());
       importDetails.setUnitPiece(importDetailsRequest.getKgLt() / importDetailsRequest.getPiece());
@@ -149,10 +206,30 @@ public class ImportServiceImpl implements ImportService {
     UOM uom = UOM.fromName(importDetails.getUom().getName());
     if (Objects.equals(uom, UOM.CARTOON)) {
       addStockByCartoon(product, importDetails);
-    } else if (Objects.equals(uom, UOM.KG_LT)) {
+    } else if (Objects.equals(uom, UOM.KG)) {
       addStockByKgLt(product, importDetails);
+    } else if (Objects.equals(uom, UOM.LT)) {
+      addStockByLt(product, importDetails);
     } else {
       addStockByPiece(product, importDetails);
+    }
+  }
+
+  private void addStockByLt(Product product, ImportDetails importDetails) {
+    Optional<Stock> optionalStock = stockRepository.findByProduct(product);
+    if (optionalStock.isEmpty()) {
+      Stock stock = new Stock();
+      stock.setProduct(product);
+      stock.setUom(UOM.fromName(UOM.LT.getName()));
+      stock.setTotalBuy(importDetails.getKgLt());
+      stock.setTotalSell(0.0);
+      stock.setInStock(importDetails.getKgLt());
+      stockRepository.save(stock);
+    } else {
+      optionalStock.get().setProduct(optionalStock.get().getProduct());
+      optionalStock.get().setTotalBuy(optionalStock.get().getTotalBuy() + importDetails.getKgLt());
+      optionalStock.get().setInStock(optionalStock.get().getInStock() + importDetails.getKgLt());
+      stockRepository.save(optionalStock.get());
     }
   }
 
@@ -179,7 +256,7 @@ public class ImportServiceImpl implements ImportService {
     if (optionalStock.isEmpty()) {
       Stock stock = new Stock();
       stock.setProduct(product);
-      stock.setUom(UOM.fromName(UOM.KG_LT.getName()));
+      stock.setUom(UOM.fromName(UOM.KG.getName()));
       stock.setTotalBuy(importDetails.getKgLt());
       stock.setTotalSell(0.0);
       stock.setInStock(importDetails.getKgLt());

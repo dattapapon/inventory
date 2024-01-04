@@ -18,18 +18,22 @@ public class SingleBillResponse {
   private String delivery;
   private String bin;
   private Integer challan;
+  private Double sales;
+  private Double due;
 
-  public static SingleBillResponse from(OrderMaster orderMaster) {
+  public static SingleBillResponse from(OrderMaster orderMaster, Double sales, Double due) {
     SingleBillResponse.SingleBillResponseBuilder builder = SingleBillResponse.builder()
             .customerId(orderMaster.getCustomer().getCustomerId())
-            .customer(orderMaster.getCustomer().getCustomerName())
+            .customer(orderMaster.getCustomer().getCompany())
             .orderId(orderMaster.getOrderId())
             .orderDate(DateUtil.getFormattedDate(orderMaster.getOrderDate()))
             .company(orderMaster.getCompanyName())
             .address(orderMaster.getCustomer().getAddress())
-            .delivery(orderMaster.getAddress())
+            .delivery(orderMaster.getBranch().getBranchName() +"/" + orderMaster.getAddress())
             .bin(orderMaster.getCustomer().getBinNo())
-            .challan(orderMaster.getChallan());
+            .challan(orderMaster.getChallan())
+            .sales(sales)
+            .due(due);
     if (orderMaster.getSupplier() != null) {
       builder.supplier(orderMaster.getSupplier().getSupplierId());
     } else {

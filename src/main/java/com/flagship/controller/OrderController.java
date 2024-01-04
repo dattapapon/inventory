@@ -2,6 +2,7 @@ package com.flagship.controller;
 
 import com.flagship.dto.request.EditOrderRequest;
 import com.flagship.dto.request.OrderMasterRequest;
+import com.flagship.dto.request.PaymentRequest;
 import com.flagship.dto.request.UpdateOrderRequest;
 import com.flagship.dto.response.*;
 import com.flagship.service.OrderService;
@@ -156,6 +157,49 @@ public class OrderController {
   public ResponseEntity<OrderRequisitionResponse> updateOrderStatus(@RequestBody @Valid @NotNull
                                                                     List<UpdateOrderRequest> selectedRows) {
     OrderRequisitionResponse response = orderService.updateOrderStatus(selectedRows);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @PostMapping(
+          value = "/payment",
+          consumes = MediaType.APPLICATION_JSON_VALUE,
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderPaymentResponse> createOrderPayment(@RequestBody @Valid @NotNull PaymentRequest request) {
+    OrderPaymentResponse response = orderService.createPayment(request);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/payments",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllPaymentsResponse> getAllPayments() {
+    AllPaymentsResponse response = orderService.getAllPayments();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/ledger",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<LedgerResponse> getAllLedger(@RequestParam(value = "customer") String customer) {
+    LedgerResponse response = orderService.getAllLedger(customer);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/product",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllOrderIdResponse> getAllOrderId(@RequestParam(value = "product") String product) {
+    AllOrderIdResponse response = orderService.getAllOrderId(product);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/uom",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<GetUomResponse> getProductUom(@RequestParam(value = "product") String product,
+                                                               @RequestParam(value = "order") Long order) {
+    GetUomResponse response = orderService.getProductUom(product, order);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

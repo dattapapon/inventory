@@ -38,7 +38,7 @@ public class OrderDetails implements Serializable {
   private ImportMaster shipment;
 
   @ManyToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = DbOrderDetails.SALE, referencedColumnName = DbSale.SALE_CODE)
+  @JoinColumn(name = DbOrderDetails.SALE, referencedColumnName = DbSale.ID)
   private Sale sale;
 
   @Column(name = DbOrderDetails.VAT)

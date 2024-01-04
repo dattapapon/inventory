@@ -24,16 +24,12 @@ public class ImportDetailsRequest implements RequestValidator {
   @Valid
   @NotNull
   private CommonRequest brand;
-  @Valid
-  @NotEmpty
   private String production;
   @Valid
   @NotNull
   private CommonRequest importCountry;
   @Valid
   private Warehouse warehouse;
-  @Valid
-  @NotEmpty
   private String expire;
   @Valid
   @NotNull
@@ -62,10 +58,10 @@ public class ImportDetailsRequest implements RequestValidator {
       throw new RequestValidationException("Warehouse should not be null. Warehouse Should be SIKAJU_COLD_STORAGE" +
               " or BADC_COLD_STORAGE or Z_INNOVATIVE_TECHNOLOGYS or AZOMPUR_WAREHOUSE or BG_FOOD_AND_AGRO_LTD");
     }
-    if (!Pattern.matches(String.valueOf(Regex.DATE_REGEX), production)) {
+    if ( production!= null && !production.isEmpty() && !Pattern.matches(String.valueOf(Regex.DATE_REGEX), production)) {
       throw new RequestValidationException("Production Should be yyyy-MM-dd(1900-01-01)");
     }
-    if (!Pattern.matches(String.valueOf(Regex.DATE_REGEX), expire)) {
+    if (expire!= null && !expire.isEmpty() && !Pattern.matches(String.valueOf(Regex.DATE_REGEX), expire)) {
       throw new RequestValidationException("Expire Should be yyyy-MM-dd(1900-01-01)");
     }
   }

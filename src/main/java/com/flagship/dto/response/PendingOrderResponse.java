@@ -10,6 +10,7 @@ import lombok.Data;
 @Builder
 public class PendingOrderResponse {
   private Long orderId;
+  private String shipment;
   private String customer;
   private String company;
   private String product;
@@ -22,6 +23,7 @@ public class PendingOrderResponse {
   public static PendingOrderResponse from(OrderMaster orderMaster, OrderDetails orderDetails) {
     return PendingOrderResponse.builder()
             .orderId(orderDetails.getOrder().getOrderId())
+            .shipment(orderDetails.getShipment().getShipmentNo())
             .customer(orderMaster.getCustomer().getCustomerName())
             .company(orderMaster.getCompanyName() != null ? orderMaster.getCompanyName() : null)
             .productId(orderDetails.getProduct().getProductId())

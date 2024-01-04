@@ -14,12 +14,12 @@ public class CustomerResponse {
   private String customerId;
   private String customerName;
   private String company;
-  private String phoneNumber;
   private CustomerType customerType;
-  private String supplier;
-  private String branch;
   private String address;
+  private Integer creditTerm;
+  private String phoneNumber;
   private String binNo;
+  private String supplier;
 
   public static CustomerResponse from(String message, Customer customer) {
     return CustomerResponse.builder()
@@ -28,10 +28,12 @@ public class CustomerResponse {
             .customerId(customer.getCustomerId())
             .customerName(customer.getCustomerName())
             .company(customer.getCompany())
-            .phoneNumber(customer.getPhoneNumber())
             .customerType(customer.getCustomerType())
             .address(customer.getAddress())
+            .creditTerm(customer.getCreditTerm() != null ? customer.getCreditTerm() : 0)
+            .phoneNumber(customer.getPhoneNumber())
             .binNo(customer.getBinNo())
+            .supplier(customer.getSupplier() != null ? customer.getSupplier().getSupplierName() : null)
             .build();
   }
 }

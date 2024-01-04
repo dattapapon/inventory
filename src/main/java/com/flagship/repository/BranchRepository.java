@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface BranchRepository extends PagingAndSortingRepository<Branch, Long> {
 
-  Optional<Branch> findByBranchCodeAndSupplier(String branch, Supplier supplier);
+  Optional<Branch> findByBranchNameAndSupplier(String branch, Supplier supplier);
 
   List<Branch> findBySupplier(Supplier supplier);
 }

@@ -47,4 +47,8 @@ public interface CommonService {
   ReturnResponse addReturn(ReturnRequest request);
 
   AllProductRevenueResponse calculateRevenue();
+
+  FinalResponse getAllProductAndArticleAndSale();
+
+  AllWastageResponse getAllWastage();
 }

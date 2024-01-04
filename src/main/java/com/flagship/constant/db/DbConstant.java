@@ -90,14 +90,14 @@ public class DbConstant {
   public static class DbCustomer extends DbCommon {
     public static final String TABLE_NAME = "customer";
     public static final String CUSTOMER_ID = "customer_id";
-    public static final String CUSTOMER_NAME = "customer_name";
+    public static final String CUSTOMER_NAME = "name";
     public static final String COMPANY = "company";
-    public static final String PHONE_NUMBER = "phone_number";
-    public static final String CUSTOMER_TYPE = "customer_type";
+    public static final String PHONE_NUMBER = "contact";
+    public static final String CUSTOMER_TYPE = "type";
     public static final String SUPPLIER = "supplier";
-    public static final String BRANCH = "branch";
     public static final String ADDRESS = "address";
     public static final String BIN_NO = "bin_no";
+    public static final String CREDIT_TERM = "credit";
   }
 
   public static class DbSupplier extends DbCommon {
@@ -109,8 +109,8 @@ public class DbConstant {
   public static class DbBranch extends DbCommon {
     public static final String TABLE_NAME = "branch";
     public static final String SUPPLIER = "supplier";
-    public static final String BRANCH_CODE = "branch_code";
-    public static final String BRANCH_NAME = "branch_name";
+    public static final String BRANCH_NAME = "name";
+    public static final String BRANCH_ADDRESS = "address";
   }
 
   public static class DbSale extends DbCommon {
@@ -119,7 +119,6 @@ public class DbConstant {
     public static final String PRODUCT = "product";
     public static final String ARTICLE = "article";
     public static final String SALE_CODE = "sale_code";
-    public static final String SALE_NAME = "sale_name";
   }
 
   public static class DbSalesPerson extends DbCommon {
@@ -160,6 +159,13 @@ public class DbConstant {
     public static final String PRICE = "price";
     public static final String TOTAL_PRICE = "total";
     public static final String ORDER_STATUS = "status";
+  }
+  public static class DbOrderBills extends DbCommon {
+    public static final String TABLE_NAME = "order_bills";
+    public static final String ORDER = "orders";
+    public static final String SALES = "sales";
+    public static final String DUE = "due";
+    public static final String PAYMENT = "payment";
   }
 
   public static class DbWastage extends DbCommon {

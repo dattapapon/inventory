@@ -45,14 +45,14 @@ public class ImportDetails implements Serializable {
   @JoinColumn(name = DbImportDetails.COUNTRY, referencedColumnName = DbCountry.COUNTRY_ID, nullable = false)
   private Country country;
 
-  @Column(name = DbImportDetails.PRODUCTION, nullable = false)
+  @Column(name = DbImportDetails.PRODUCTION)
   private ZonedDateTime production;
 
   @Column(name = DbImportDetails.WAREHOUSE, nullable = false)
   @Enumerated(value = EnumType.STRING)
   private Warehouse warehouse;
 
-  @Column(name = DbImportDetails.EXPIRE, nullable = false)
+  @Column(name = DbImportDetails.EXPIRE)
   private ZonedDateTime expire;
 
   @Column(name = DbImportDetails.CARTOON)

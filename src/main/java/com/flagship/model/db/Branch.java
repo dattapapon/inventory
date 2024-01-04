@@ -27,11 +27,11 @@ public class Branch implements Serializable {
   @JoinColumn(name = DbBranch.SUPPLIER, referencedColumnName = DbSupplier.SUPPLIER_ID, nullable = false)
   private Supplier supplier;
 
-  @Column(name = DbBranch.BRANCH_CODE, nullable = false)
-  private String branchCode;
-
   @Column(name = DbBranch.BRANCH_NAME, nullable = false)
   private String branchName;
+
+  @Column(name = DbBranch.BRANCH_ADDRESS, nullable = false)
+  private String address;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbBranch.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)

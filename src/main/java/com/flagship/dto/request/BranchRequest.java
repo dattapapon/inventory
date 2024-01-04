@@ -14,10 +14,10 @@ public class BranchRequest implements RequestValidator {
   private CommonRequest supplier;
   @Valid
   @NotEmpty
-  private String branchCode;
+  private String name;
   @Valid
   @NotEmpty
-  private String branchName;
+  private String address;
   @Valid
   @NotEmpty
   private String user;

@@ -143,18 +143,29 @@ public class CommonServiceImpl implements CommonService {
 
   @Override
   public SaleResponse addSale(SaleRequest request) {
-    //Optional<Sale> optionalSale = saleRepository.findBySaleCode(request.getSaleCode());
+    Optional<Sale> optionalSale1 = saleRepository.findBySupplierAndProductAndArticleAndSaleCode(
+            getSupplier(request.getSupplier().getValue()), getProduct(request.getProduct().getValue())
+            , request.getArticle(), request.getSaleCode());
+    Optional<Sale> optionalSale2 = saleRepository.findBySupplierAndProductAndArticle(
+            getSupplier(request.getSupplier().getValue()), getProduct(request.getProduct().getValue())
+            , request.getArticle());
+    Optional<Sale> optionalSale3 = saleRepository.findBySupplierAndProductAndSaleCode(
+            getSupplier(request.getSupplier().getValue()), getProduct(request.getProduct().getValue()),
+            request.getSaleCode());
+    Optional<Sale> optionalSale4 = saleRepository.findBySupplierAndProduct(
+            getSupplier(request.getSupplier().getValue()), getProduct(request.getProduct().getValue()));
     Optional<User> user = userRepository.findByEmail(request.getUser());
     if (user.isEmpty()) {
       throw new RequestValidationException("User not exist");
     }
-
+    if (optionalSale1.isPresent() || optionalSale2.isPresent() || optionalSale3.isPresent() || optionalSale4.isPresent()) {
+      throw new RequestValidationException("Article and Sale code is exist.");
+    }
     Sale sale = new Sale();
     sale.setSupplier(getSupplier(request.getSupplier().getValue()));
     sale.setProduct(getProduct(request.getProduct().getValue()));
     sale.setArticle(request.getArticle());
     sale.setSaleCode(request.getSaleCode());
-    sale.setSaleName(request.getSaleName());
     sale.setCreatedBy(user.get());
     saleRepository.save(sale);
     return SaleResponse.from("Sale And Article code Added Successfully", sale);
@@ -181,7 +192,7 @@ public class CommonServiceImpl implements CommonService {
 
   @Override
   public BranchResponse addBranch(BranchRequest request) {
-    Optional<Branch> optionalBranch = branchRepository.findByBranchCodeAndSupplier(request.getBranchCode(),
+    Optional<Branch> optionalBranch = branchRepository.findByBranchNameAndSupplier(request.getName(),
             getSupplier(request.getSupplier().getValue()));
     Optional<User> user = userRepository.findByEmail(request.getUser());
     if (user.isEmpty()) {
@@ -192,8 +203,8 @@ public class CommonServiceImpl implements CommonService {
     } else {
       Branch branch = new Branch();
       branch.setSupplier(getSupplier(request.getSupplier().getValue()));
-      branch.setBranchCode(request.getBranchCode());
-      branch.setBranchName(request.getBranchName());
+      branch.setBranchName(request.getName());
+      branch.setAddress(request.getAddress());
       branch.setCreatedBy(user.get());
       branchRepository.save(branch);
       return BranchResponse.from("Branch Added Successfully", branch);
@@ -272,7 +283,7 @@ public class CommonServiceImpl implements CommonService {
   @Override
   public SingleSale getSale(String product, String supplier) {
     Optional<Sale> optionalSale = saleRepository.findByProductAndSupplier(getProduct(product), getSupplier(supplier));
-    return optionalSale.map(sale -> SingleSale.from(sale.getSaleName(), sale.getSaleCode(), sale.getArticle()))
+    return optionalSale.map(sale -> SingleSale.from(sale.getSaleCode(), sale.getArticle()))
             .orElse(null);
   }
 
@@ -294,7 +305,7 @@ public class CommonServiceImpl implements CommonService {
   @Override
   public CustomerResponse addCustomer(CustomerRequest customerRequest) {
     customerRequest.validate();
-    Boolean checkCustomerExist = customerExist(customerRequest.getCustomerId());
+    Boolean checkCustomerExist = customerExist(customerRequest.getId());
     if (checkCustomerExist) {
       throw new RequestValidationException("Customer id is exist");
     }
@@ -303,20 +314,15 @@ public class CommonServiceImpl implements CommonService {
       throw new RequestValidationException("User not exist");
     }
     Customer customer = new Customer();
-    customer.setCustomerId(customerRequest.getCustomerId());
-    customer.setCustomerName(customerRequest.getCustomerName());
+    customer.setCustomerId(customerRequest.getId());
+    customer.setCustomerName(customerRequest.getName());
     customer.setCompany(customerRequest.getCompany());
-    customer.setPhoneNumber(customerRequest.getPhoneNumber());
-    customer.setCustomerType(CustomerType.fromName(customerRequest.getCustomerType().getName()));
-    if (customerRequest.getSupplier() != null && !customerRequest.getSupplier().isEmpty()) {
-      customer.setSupplier(getSupplier(customerRequest.getSupplier()));
-    }
-    if (customerRequest.getBranch() != null && customerRequest.getBranch().getValue() != null
-            && !customerRequest.getBranch().getValue().isEmpty()) {
-      customer.setBranch(getBranch(customerRequest.getBranch().getValue(), customerRequest.getSupplier()));
-    }
+    customer.setCustomerType(CustomerType.fromName(customerRequest.getType().getName()));
     customer.setAddress(customerRequest.getAddress());
+    customer.setCreditTerm(customerRequest.getCreditTerm() != null ? customerRequest.getCreditTerm() : 0);
+    customer.setPhoneNumber(customerRequest.getContact());
     customer.setBinNo(customerRequest.getBinNo());
+    customer.setSupplier(!(customerRequest.getSupplier().isEmpty()) ? getSupplier(customerRequest.getSupplier()) : null);
     customer.setCreatedBy(user.get());
     customerRepository.save(customer);
     return CustomerResponse.from("Customer added Successfully", customer);
@@ -328,7 +334,7 @@ public class CommonServiceImpl implements CommonService {
   }
 
   private Branch getBranch(String branch, String supplier) {
-    Optional<Branch> optionalBranch = branchRepository.findByBranchCodeAndSupplier(branch, getSupplier(supplier));
+    Optional<Branch> optionalBranch = branchRepository.findByBranchNameAndSupplier(branch, getSupplier(supplier));
     if (optionalBranch.isPresent()) {
       return optionalBranch.get();
     } else {
@@ -399,111 +405,200 @@ public class CommonServiceImpl implements CommonService {
     if (user.isEmpty()) {
       throw new RequestValidationException("User not exist");
     }
-    wastage.setProduct(getProduct(request.getProduct().getValue()));
-    wastage.setShipment(getShipment(request.getShipment().getValue()));
-    wastage.setCartoon(request.getCartoon());
-    wastage.setPiece(request.getPiece());
-    wastage.setKgLt(request.getKgLt());
-    wastage.setCause(Cause.fromName(request.getCause().toString()));
-    wastage.setCreatedBy(user.get());
-    updateStock(wastage);
-    wastageRepository.save(wastage);
-    return WastageResponse.from("Wastage added successfully", wastage);
-  }
-
-  private void updateStock(Wastage wastage) {
-    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(wastage.getProduct(),
-            wastage.getShipment());
-    if (importDetails.isPresent()) {
-      importDetails.get().setCartoon(importDetails.get().getCartoon() - wastage.getCartoon());
-      importDetails.get().setPiece(importDetails.get().getPiece() - wastage.getPiece());
-      importDetails.get().setKgLt(importDetails.get().getKgLt() - wastage.getKgLt());
-      if (importDetails.get().getUom().equals(UOM.KG_LT)) {
-        updateStockData(wastage.getProduct(), wastage.getKgLt());
+    Optional<ImportDetails> optionalImportDetails = importDetailsRepository.findByProductAndImportMaster(
+            getProduct(request.getProduct().getValue()), getShipment(request.getShipment().getValue()));
+    if (optionalImportDetails.isPresent()) {
+      wastage.setProduct(optionalImportDetails.get().getProduct());
+      wastage.setShipment(optionalImportDetails.get().getImportMaster());
+      if (request.getUom().equals(UOM.LT)) {
+        wastage.setCartoon(request.getQuantity() / optionalImportDetails.get().getUnitCartoon());
+        wastage.setPiece(request.getQuantity() / optionalImportDetails.get().getUnitPiece());
+        wastage.setKgLt(request.getQuantity());
       }
+      if (request.getUom().equals(UOM.KG)) {
+        wastage.setCartoon(request.getQuantity() / optionalImportDetails.get().getUnitCartoon());
+        wastage.setPiece(request.getQuantity() / optionalImportDetails.get().getUnitPiece());
+        wastage.setKgLt(request.getQuantity());
+      }
+      if (request.getUom().equals(UOM.PIECE)) {
+        wastage.setCartoon(request.getQuantity());
+        wastage.setPiece((request.getQuantity() * optionalImportDetails.get().getUnitPiece())
+                / optionalImportDetails.get().getUnitPiece());
+        wastage.setKgLt(request.getQuantity() * optionalImportDetails.get().getUnitPiece());
+      }
+      if (request.getUom().equals(UOM.CARTOON)) {
+        wastage.setCartoon((request.getQuantity() * optionalImportDetails.get().getUnitPiece())
+                / optionalImportDetails.get().getUnitCartoon());
+        wastage.setPiece(request.getQuantity());
+        wastage.setKgLt(request.getQuantity() * optionalImportDetails.get().getUnitPiece());
+      }
+      wastage.setCreatedBy(user.get());
+      wastage.setCause(Cause.fromName(request.getCause().toString()));
+      wastageRepository.save(wastage);
+      updateStock(wastage);
+      return WastageResponse.from("Wastage added successfully", wastage);
+    }else {
+      throw new RequestValidationException("Import not found.");
     }
   }
 
-  private void updateStockData(Product product, Double quantity) {
+private void updateStock(Wastage wastage) {
+  Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(wastage.getProduct(),
+          wastage.getShipment());
+  if (importDetails.isPresent()) {
+    importDetails.get().setCartoon(importDetails.get().getCartoon() - wastage.getCartoon());
+    importDetails.get().setPiece(importDetails.get().getPiece() - wastage.getPiece());
+    importDetails.get().setKgLt(importDetails.get().getKgLt() - wastage.getKgLt());
+    if (importDetails.get().getUom().equals(UOM.KG)) {
+      updateStockData(wastage.getProduct(), wastage.getKgLt());
+    } else if (importDetails.get().getUom().equals(UOM.LT)) {
+      updateStockData(wastage.getProduct(), wastage.getKgLt());
+    } else if (importDetails.get().getUom().equals(UOM.PIECE)) {
+      updateStockData(wastage.getProduct(), wastage.getPiece());
+    } else {
+      updateStockData(wastage.getProduct(), wastage.getCartoon());
+    }
+    importDetailsRepository.save(importDetails.get());
+  }
+}
+
+private void updateStockData(Product product, Double quantity) {
+  Optional<Stock> optionalStock = stockRepository.findByProduct(product);
+  if (optionalStock.isPresent()) {
+    optionalStock.get().setTotalBuy(optionalStock.get().getTotalBuy());
+    optionalStock.get().setInStock(optionalStock.get().getInStock() - quantity);
+    stockRepository.save(optionalStock.get());
+  }
+}
+
+@Override
+public ReturnResponse addReturn(ReturnRequest request) {
+  Returns returns = new Returns();
+  Optional<User> user = userRepository.findByEmail(request.getUser());
+  if (user.isEmpty()) {
+    throw new RequestValidationException("User not exist");
+  }
+  Optional<OrderDetails> optionalOrderDetails = orderDetailsRepository.findByOrderAndProduct(
+          getOrderId(Long.valueOf(request.getOrder().getValue())), getProduct(request.getProduct().getValue()));
+  if (optionalOrderDetails.isPresent()) {
+    returns.setProduct(getProduct(request.getProduct().getValue()));
+    returns.setOrder(getOrderId(Long.valueOf(request.getOrder().getValue())));
+    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
+            optionalOrderDetails.get().getProduct(), optionalOrderDetails.get().getShipment());
+    if (importDetails.isPresent()) {
+      if (request.getUom().equals(UOM.LT)) {
+        returns.setCartoon(request.getQuantity() / importDetails.get().getUnitCartoon());
+        returns.setPiece(request.getQuantity() / importDetails.get().getUnitPiece());
+        returns.setKgLt(request.getQuantity());
+      }
+      if (request.getUom().equals(UOM.KG)) {
+        returns.setCartoon(request.getQuantity() / importDetails.get().getUnitCartoon());
+        returns.setPiece(request.getQuantity() / importDetails.get().getUnitPiece());
+        returns.setKgLt(request.getQuantity());
+      }
+      if (request.getUom().equals(UOM.PIECE)) {
+        returns.setCartoon(request.getQuantity());
+        returns.setPiece((request.getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitPiece());
+        returns.setKgLt(request.getQuantity() * importDetails.get().getUnitPiece());
+      }
+      if (request.getUom().equals(UOM.CARTOON)) {
+        returns.setCartoon((request.getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon());
+        returns.setPiece(request.getQuantity());
+        returns.setKgLt(request.getQuantity() * importDetails.get().getUnitPiece());
+      }
+      returns.setCreatedBy(user.get());
+      returns.setDeliveryMan(request.getDeliveryMan());
+      returns.setCause(Cause.fromName(request.getCause().toString()));
+      returnsRepository.save(returns);
+      return ReturnResponse.from("Returns added successfully", returns);
+    } else {
+      throw new RequestValidationException("Product not found");
+    }
+  } else {
+    throw new RequestValidationException("Order not found");
+  }
+}
+
+@Override
+public AllProductRevenueResponse calculateRevenue() {
+  DecimalFormat decimalFormat = new DecimalFormat("#.###");
+  List<Product> products = (List<Product>) productRepository.findAll();
+  List<SingleProductRevenueResponse> singleProductRevenueResponses = new ArrayList<>();
+  for (Product product : products) {
+    Double totalBuy = 0.0;
+    Double totalSell = 0.0;
+    Double inStock = 0.0;
+    double averageBuyingPrice;
+    double averageSellingPrice;
+    Double totalBuyingPrice = 0.0;
+    Double totalSellingPrice = 0.0;
+    double revenue;
+    List<ImportDetails> importDetailsList = importDetailsRepository.findByProduct(product);
+    List<OrderDetails> orderDetailsList = orderDetailsRepository.findByProduct(product);
     Optional<Stock> optionalStock = stockRepository.findByProduct(product);
     if (optionalStock.isPresent()) {
-      optionalStock.get().setTotalBuy(optionalStock.get().getTotalBuy());
-      optionalStock.get().setTotalSell(optionalStock.get().getTotalSell() + quantity);
-      optionalStock.get().setInStock(optionalStock.get().getInStock() - quantity);
+      totalBuy = optionalStock.get().getTotalBuy();
+      totalSell = optionalStock.get().getTotalSell();
+      inStock = optionalStock.get().getInStock();
     }
+    for (ImportDetails importDetails : importDetailsList) {
+      totalBuyingPrice = totalBuyingPrice + importDetails.getTotal();
+    }
+    for (OrderDetails orderDetails : orderDetailsList) {
+      totalSellingPrice = totalSellingPrice + orderDetails.getTotalPrice();
+    }
+    averageBuyingPrice = totalBuy > 0 ? Double.parseDouble(decimalFormat.format(totalBuyingPrice / totalBuy)) : 0.0;
+    averageSellingPrice = totalSell > 0 ? Double.parseDouble(decimalFormat.format(totalSellingPrice / totalSell)) : 0.0;
+    revenue = Double.parseDouble(decimalFormat.format(totalSellingPrice - totalBuyingPrice));
+    singleProductRevenueResponses.add(SingleProductRevenueResponse.from(product.getProductName(), totalBuy, totalSell,
+            inStock, averageBuyingPrice, averageSellingPrice, totalBuyingPrice, totalSellingPrice, revenue));
   }
+  return AllProductRevenueResponse.from(singleProductRevenueResponses);
+}
+
+@Override
+public FinalResponse getAllProductAndArticleAndSale() {
+  List<Product> products = (List<Product>) productRepository.findAll();
+  List<AllProductAndArticleAndSaleResponse> allProductAndArticleAndSaleResponses = new ArrayList<>();
+  int serialNo = 0;
+  for (Product product : products) {
+    serialNo += 1;
+    List<Sale> sales = saleRepository.findByProduct(product);
+    List<CompanyResponse> companyResponses = new ArrayList<>();
+    for (Sale sale : sales) {
+      companyResponses.add(CompanyResponse.from(sale));
+    }
+    allProductAndArticleAndSaleResponses.add(AllProductAndArticleAndSaleResponse.from(serialNo, product.getProductId(),
+            product.getProductName(), companyResponses));
+  }
+  return FinalResponse.from(allProductAndArticleAndSaleResponses);
+}
 
   @Override
-  public ReturnResponse addReturn(ReturnRequest request) {
-    Returns returns = new Returns();
-    Optional<User> user = userRepository.findByEmail(request.getUser());
-    if (user.isEmpty()) {
-      throw new RequestValidationException("User not exist");
+  public AllWastageResponse getAllWastage() {
+    List<Wastage> wastageList = (List<Wastage>) wastageRepository.findAll();
+    List<SingleWastageResponse> singleWastageResponses = new ArrayList<>();
+    for(Wastage wastage : wastageList){
+      singleWastageResponses.add(SingleWastageResponse.from(wastage));
     }
-    returns.setProduct(getProduct(request.getProduct().getValue()));
-    returns.setOrder(getOrderId(request.getOrder()));
-    returns.setCartoon(request.getCartoon());
-    returns.setPiece(request.getPiece());
-    returns.setKgLt(request.getKgLt());
-    returns.setCreatedBy(user.get());
-    returns.setDeliveryMan(request.getDeliveryMan());
-    returns.setCause(Cause.fromName(request.getCause().toString()));
-    returnsRepository.save(returns);
-    return ReturnResponse.from("Returns added successfully", returns);
-  }
-
-  @Override
-  public AllProductRevenueResponse calculateRevenue() {
-    DecimalFormat decimalFormat = new DecimalFormat("#.###");
-    List<Product> products = (List<Product>) productRepository.findAll();
-    List<SingleProductRevenueResponse> singleProductRevenueResponses = new ArrayList<>();
-    for (Product product : products) {
-      Double totalBuy = 0.0;
-      Double totalSell = 0.0;
-      Double inStock = 0.0;
-      double averageBuyingPrice;
-      double averageSellingPrice;
-      Double totalBuyingPrice = 0.0;
-      Double totalSellingPrice = 0.0;
-      double revenue;
-      List<ImportDetails> importDetailsList = importDetailsRepository.findByProduct(product);
-      List<OrderDetails> orderDetailsList = orderDetailsRepository.findByProduct(product);
-      Optional<Stock> optionalStock = stockRepository.findByProduct(product);
-      if (optionalStock.isPresent()) {
-        totalBuy = optionalStock.get().getTotalBuy();
-        totalSell = optionalStock.get().getTotalSell();
-        inStock = optionalStock.get().getInStock();
-      }
-      for (ImportDetails importDetails : importDetailsList) {
-        totalBuyingPrice = totalBuyingPrice + importDetails.getTotal();
-      }
-      for (OrderDetails orderDetails : orderDetailsList) {
-        totalSellingPrice = totalSellingPrice + orderDetails.getTotalPrice();
-      }
-      averageBuyingPrice = totalBuy > 0 ? Double.parseDouble(decimalFormat.format(totalBuyingPrice / totalBuy)) : 0.0;
-      averageSellingPrice = totalSell > 0 ? Double.parseDouble(decimalFormat.format(totalSellingPrice / totalSell)) : 0.0;
-      revenue = Double.parseDouble(decimalFormat.format(totalSellingPrice - totalBuyingPrice));
-      singleProductRevenueResponses.add(SingleProductRevenueResponse.from(product.getProductName(), totalBuy, totalSell,
-              inStock, averageBuyingPrice, averageSellingPrice, totalBuyingPrice, totalSellingPrice, revenue));
-    }
-    return AllProductRevenueResponse.from(singleProductRevenueResponses);
+    return AllWastageResponse.from(singleWastageResponses);
   }
 
   private OrderMaster getOrderId(Long order) {
-    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(order);
-    if (optionalOrderMaster.isPresent()) {
-      return optionalOrderMaster.get();
-    } else {
-      throw new RequestValidationException("Order not exist");
-    }
+  Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(order);
+  if (optionalOrderMaster.isPresent()) {
+    return optionalOrderMaster.get();
+  } else {
+    throw new RequestValidationException("Order not exist");
   }
+}
 
-  private ImportMaster getShipment(String shipment) {
-    Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
-    if (optionalImportMaster.isPresent()) {
-      return optionalImportMaster.get();
-    } else {
-      throw new RequestValidationException("Shipment not exist");
-    }
+private ImportMaster getShipment(String shipment) {
+  Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
+  if (optionalImportMaster.isPresent()) {
+    return optionalImportMaster.get();
+  } else {
+    throw new RequestValidationException("Shipment not exist");
   }
+}
 }

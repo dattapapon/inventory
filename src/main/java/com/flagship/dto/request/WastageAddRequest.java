@@ -1,6 +1,7 @@
 package com.flagship.dto.request;
 
 import com.flagship.constant.enums.Cause;
+import com.flagship.constant.enums.UOM;
 import com.flagship.dto.RequestValidator;
 import com.flagship.exception.RequestValidationException;
 import lombok.Data;
@@ -18,10 +19,14 @@ public class WastageAddRequest implements RequestValidator {
   @Valid
   @NotNull
   private CommonRequest shipment;
-  private Double cartoon;
-  private Double piece;
-  private Double kgLt;
   @Valid
+  @NotNull
+  private UOM uom;
+  @Valid
+  @NotNull
+  private Double quantity;
+  @Valid
+  @NotNull
   private Cause cause;
   @Valid
   @NotEmpty

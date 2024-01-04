@@ -2,6 +2,7 @@ package com.flagship.service;
 
 import com.flagship.dto.request.EditOrderRequest;
 import com.flagship.dto.request.OrderMasterRequest;
+import com.flagship.dto.request.PaymentRequest;
 import com.flagship.dto.request.UpdateOrderRequest;
 import com.flagship.dto.response.*;
 
@@ -35,4 +36,14 @@ public interface OrderService {
   AllPendingOrdersResponse getPendingOrder();
 
   OrderRequisitionResponse updateOrderStatus(List<UpdateOrderRequest> updateOrderRequest);
+
+  OrderPaymentResponse createPayment(PaymentRequest request);
+
+  AllPaymentsResponse getAllPayments();
+
+  LedgerResponse getAllLedger(String customer);
+
+  AllOrderIdResponse getAllOrderId(String product);
+
+  GetUomResponse getProductUom(String product, Long order);
 }

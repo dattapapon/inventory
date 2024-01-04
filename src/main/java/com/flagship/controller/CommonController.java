@@ -22,7 +22,6 @@ public class CommonController {
   public CommonController(CommonService commonService) {
     this.commonService = commonService;
   }
-
   @PostMapping(
           value = "/product",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -32,7 +31,6 @@ public class CommonController {
     ProductResponse response = commonService.createProduct(productRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/brand",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -42,7 +40,6 @@ public class CommonController {
     BrandResponse response = commonService.addBrand(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/country",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -52,7 +49,6 @@ public class CommonController {
     CountryResponse response = commonService.addCountry(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/category",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -62,7 +58,6 @@ public class CommonController {
     CategoriesResponse response = commonService.addCategory(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/sale",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -72,7 +67,6 @@ public class CommonController {
     SaleResponse response = commonService.addSale(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/branch",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -82,7 +76,6 @@ public class CommonController {
     BranchResponse response = commonService.addBranch(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/supplier",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -92,7 +85,6 @@ public class CommonController {
     SupplierResponse response = commonService.addSupplier(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/product",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -101,7 +93,6 @@ public class CommonController {
     AllProductResponse allProduct = commonService.getProduct();
     return new ResponseEntity<>(allProduct, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/stock",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -110,7 +101,6 @@ public class CommonController {
     AllStockResponse allStockResponse = commonService.getStock();
     return new ResponseEntity<>(allStockResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/brand",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -119,7 +109,6 @@ public class CommonController {
     AllBrandResponse allBrandResponse = commonService.getBrand();
     return new ResponseEntity<>(allBrandResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/branch",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -128,7 +117,6 @@ public class CommonController {
     AllBranchResponse allBranchResponse = commonService.getBranch(supplier);
     return new ResponseEntity<>(allBranchResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/country",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -137,7 +125,6 @@ public class CommonController {
     AllCountryResponse allCountryResponse = commonService.getCountry();
     return new ResponseEntity<>(allCountryResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/category",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -146,7 +133,6 @@ public class CommonController {
     AllCategoryResponse allCategoryResponse = commonService.getCategory();
     return new ResponseEntity<>(allCategoryResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/sale",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -156,7 +142,6 @@ public class CommonController {
     SingleSale singleSale = commonService.getSale(product, supplier);
     return new ResponseEntity<>(singleSale, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/supplier",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -165,7 +150,6 @@ public class CommonController {
     GetAllSuppliers response = commonService.getSupplier();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/customer",
           produces = MediaType.APPLICATION_JSON_VALUE,
@@ -176,7 +160,6 @@ public class CommonController {
     CustomerResponse customerResponse = commonService.addCustomer(customerRequest);
     return new ResponseEntity<>(customerResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/customer",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -185,7 +168,6 @@ public class CommonController {
     GetAllCustomer response = commonService.getCustomer();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/sales_person",
           produces = MediaType.APPLICATION_JSON_VALUE,
@@ -196,7 +178,6 @@ public class CommonController {
     SalesPersonResponse salesPersonResponse = commonService.addSalesPerson(salesPersonRequest);
     return new ResponseEntity<>(salesPersonResponse, HttpStatus.OK);
   }
-
   @GetMapping(
           value = "/sales_person",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -205,7 +186,6 @@ public class CommonController {
     AllSalesPersonResponse allSalesPersonResponse = commonService.getSalesPerson();
     return new ResponseEntity<>(allSalesPersonResponse, HttpStatus.OK);
   }
-
   @PostMapping(
           value = "/wastage",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -232,6 +212,22 @@ public class CommonController {
   )
   public ResponseEntity<AllProductRevenueResponse> calculateRevenue() {
     AllProductRevenueResponse response = commonService.calculateRevenue();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/welcome",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<FinalResponse> getAllProductAndArticleAndSale() {
+    FinalResponse response = commonService.getAllProductAndArticleAndSale();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/wastage",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllWastageResponse> getAllWastage() {
+    AllWastageResponse response = commonService.getAllWastage();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

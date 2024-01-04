@@ -29,7 +29,8 @@ public class SingleVatDetailsResponse {
     Double totalVatAmount;
     if (orderDetails.getVat() != null) {
       builder.vat(orderDetails.getVat() + "%");
-      totalVatAmount = (orderDetails.getVat() * orderDetails.getTotalPrice()) / 100.0;
+
+      totalVatAmount = (((orderDetails.getVat() / 100.0)) * orderDetails.getPrice()) * orderDetails.getQuantity();
       builder.vatAmount(totalVatAmount);
       builder.totalAmountWithVatTax(orderDetails.getTotalPrice() + totalVatAmount);
     } else {

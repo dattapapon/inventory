@@ -1,6 +1,7 @@
 package com.flagship.dto.request;
 
 import com.flagship.constant.enums.Cause;
+import com.flagship.constant.enums.UOM;
 import com.flagship.dto.RequestValidator;
 import com.flagship.exception.RequestValidationException;
 import lombok.Data;
@@ -17,10 +18,13 @@ public class ReturnRequest implements RequestValidator {
   private CommonRequest product;
   @Valid
   @NotNull
-  private Long order;
-  private Double cartoon;
-  private Double piece;
-  private Double kgLt;
+  private CommonRequest order;
+  @Valid
+  @NotNull
+  private UOM uom;
+  @Valid
+  @NotNull
+  private Double quantity;
   @Valid
   @NotEmpty
   private String user;

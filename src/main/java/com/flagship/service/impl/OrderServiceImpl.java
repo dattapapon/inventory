@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -31,6 +32,10 @@ public class OrderServiceImpl implements OrderService {
   private final SalesPersonRepository salesPersonRepository;
   private final SaleRepository saleRepository;
   private final ReturnsRepository returnsRepository;
+  private final SupplierRepository supplierRepository;
+  private final OrderBillsRepository orderBillsRepository;
+  private final BranchRepository branchRepository;
+  DecimalFormat decimalFormat = new DecimalFormat("#.###");
 
   @Autowired
   public OrderServiceImpl(OrderMasterRepository orderMasterRepository, OrderDetailsRepository orderDetailsRepository,
@@ -38,7 +43,8 @@ public class OrderServiceImpl implements OrderService {
                           ProductRepository productRepository, ImportMasterRepository importMasterRepository,
                           UserRepository userRepository, StockRepository stockRepository,
                           SalesPersonRepository salesPersonRepository, SaleRepository saleRepository,
-                          ReturnsRepository returnsRepository) {
+                          ReturnsRepository returnsRepository, SupplierRepository supplierRepository,
+                          OrderBillsRepository orderBillsRepository, BranchRepository branchRepository) {
     this.orderMasterRepository = orderMasterRepository;
     this.orderDetailsRepository = orderDetailsRepository;
     this.customerRepository = customerRepository;
@@ -50,6 +56,9 @@ public class OrderServiceImpl implements OrderService {
     this.salesPersonRepository = salesPersonRepository;
     this.saleRepository = saleRepository;
     this.returnsRepository = returnsRepository;
+    this.supplierRepository = supplierRepository;
+    this.orderBillsRepository = orderBillsRepository;
+    this.branchRepository = branchRepository;
   }
 
   @Override
@@ -60,20 +69,16 @@ public class OrderServiceImpl implements OrderService {
     orderMaster.setOrderId(orderId);
     orderMaster.setCustomer(getCustomer(orderMasterRequest.getCustomer().getValue()));
     orderMaster.setCompanyName(orderMasterRequest.getCompanyName());
-    if (orderMasterRequest.getSupplier() != null && !orderMasterRequest.getSupplier().isEmpty()) {
+    if (orderMasterRequest.getSupplierId() != null && !orderMasterRequest.getSupplierId().isEmpty()) {
       orderMaster.setSupplier(getSupplier(orderMasterRequest.getSupplierId()));
-    }
-    if (orderMasterRequest.getBranch() != null && !orderMasterRequest.getBranch().isEmpty()) {
-      orderMaster.setBranch(getBranch(orderMasterRequest.getBranchCode()));
+      if (orderMasterRequest.getBranch() != null) {
+        orderMaster.setBranch(getBranch(orderMasterRequest.getBranch().getValue(), getSupplier(orderMasterRequest.getSupplierId())));
+      }
     }
     orderMaster.setCustomerType(CustomerType.fromName(orderMasterRequest.getCustomerType().getName()));
     orderMaster.setOrderDate(DateUtil.getZoneDateTime(orderMasterRequest.getOrderDate() + "T00:00:00"));
     orderMaster.setDeliveryDate(DateUtil.getZoneDateTime(orderMasterRequest.getDeliveryDate() + "T00:00:00"));
-    if (orderMasterRequest.getCreditTerm() != null && !orderMasterRequest.getCreditTerm().isEmpty()) {
-      orderMaster.setCreditTerm(DateUtil.getZoneDateTime(orderMasterRequest.getCreditTerm() + "T00:00:00"));
-    } else {
-      orderMaster.setCreditTerm(null);
-    }
+    orderMaster.setCreditTerm(orderMasterRequest.getCreditTerm());
     orderMaster.setChallan(orderMasterRequest.getChallanNo());
     orderMaster.setAddress(orderMasterRequest.getAddress());
     orderMaster.setOrderBy(getSalesPerson(orderMasterRequest.getOrderBy().getValue()));
@@ -83,36 +88,56 @@ public class OrderServiceImpl implements OrderService {
     return OrderResponse.from("Order create successfully", orderMaster, orderDetailsResponses);
   }
 
-  private List<OrderDetailsResponse> addOrderDetails(OrderMaster orderId, List<OrderDetailsRequest> orderDetailsRequestList) {
+  private List<OrderDetailsResponse> addOrderDetails(OrderMaster orderMaster, List<OrderDetailsRequest> orderDetailsRequestList) {
     List<OrderDetailsResponse> orderDetailsResponses = new ArrayList<>();
     List<OrderDetails> orderDetailsList = new ArrayList<>();
     List<CommonRequest> commonRequests = new ArrayList<>();
+    Map<String, OrderDetails> productShipmentMap = new HashMap<>();
     for (OrderDetailsRequest orderDetailsRequest : orderDetailsRequestList) {
-      OrderDetails orderDetails = new OrderDetails();
-      orderDetails.setOrder(orderId);
-      orderDetails.setProduct(getProduct(orderDetailsRequest.getProduct().getValue()));
-      if (orderDetailsRequest.getSale() != null && !orderDetailsRequest.getSale().isEmpty()) {
-        orderDetails.setSale(getSale(orderDetailsRequest.getSaleCode()));
+      String key = orderDetailsRequest.getProduct().getValue() + "_" + orderDetailsRequest.getShipment().getValue();
+      if (productShipmentMap.containsKey(key)) {
+        OrderDetails existingOrderDetails = productShipmentMap.get(key);
+        existingOrderDetails.setQuantity(existingOrderDetails.getQuantity() + orderDetailsRequest.getQuantity());
+      } else {
+        OrderDetails orderDetails = new OrderDetails();
+        orderDetails.setOrder(orderMaster);
+        orderDetails.setProduct(getProduct(orderDetailsRequest.getProduct().getValue()));
+        orderDetails.setVat(orderDetailsRequest.getVat() != null ? Double.parseDouble(decimalFormat.format(orderDetailsRequest.getVat())) : 0.0);
+        orderDetails.setUom(UOM.fromName(orderDetailsRequest.getUom().getName()));
+        orderDetails.setQuantity(Double.parseDouble(decimalFormat.format(orderDetailsRequest.getQuantity())));
+        orderDetails.setDiscount(orderDetailsRequest.getDiscount() != null ? Double.parseDouble(decimalFormat.format(orderDetailsRequest.getDiscount())) : 0.0);
+        orderDetails.setRemarks(orderDetailsRequest.getRemarks());
+        orderDetails.setPrice(Double.parseDouble(decimalFormat.format(orderDetailsRequest.getPrice())));
+        orderDetails.setTotalPrice(Double.parseDouble(decimalFormat.format(orderDetailsRequest.getTotalPrice())));
+        orderDetails.setShipment(getShipment(orderDetailsRequest.getShipment().getValue()));
+        if (orderDetailsRequest.getSaleCode() != null && !orderDetailsRequest.getSaleCode().isEmpty()) {
+          orderDetails.setSale(getSale(orderDetailsRequest.getSaleCode(), orderDetailsRequest.getArticle(),
+                  orderMaster.getSupplier().getSupplierId(), orderDetailsRequest.getProduct().getValue()));
+        }
+        orderDetails.setStatus(OrderStatus.PENDING);
+        orderDetailsList.add(orderDetails);
+        commonRequests.add(orderDetailsRequest.getShipment());
+        orderDetailsResponses.add(OrderDetailsResponse.from(orderDetails));
+        productShipmentMap.put(key, orderDetails);
       }
-      orderDetails.setVat(orderDetailsRequest.getVat());
-      orderDetails.setUom(UOM.fromName(orderDetailsRequest.getUom().getName()));
-      orderDetails.setQuantity(orderDetailsRequest.getQuantity());
-      orderDetails.setDiscount(orderDetailsRequest.getDiscount());
-      orderDetails.setRemarks(orderDetailsRequest.getRemarks());
-      orderDetails.setPrice(orderDetailsRequest.getPrice());
-      orderDetails.setTotalPrice(getTotal(orderDetailsRequest));
-      orderDetails.setShipment(getShipment(orderDetailsRequest.getShipment().getValue()));
-      orderDetails.setSale(getSale(orderDetailsRequest.getSaleCode()));
-      orderDetails.setStatus(OrderStatus.PENDING);
-      orderDetailsList.add(orderDetails);
-      commonRequests.add(orderDetailsRequest.getShipment());
-      orderDetailsResponses.add(OrderDetailsResponse.from(orderDetails));
     }
     orderDetailsRepository.saveAll(orderDetailsList);
+    double sales = 0.0;
     for (int i = 0; i < orderDetailsList.size(); i++) {
+      sales = sales + orderDetailsList.get(i).getTotalPrice();
       updateStock(orderDetailsList.get(i), commonRequests.get(i));
     }
+    saveBills(sales, orderMaster);
     return orderDetailsResponses;
+  }
+
+  private void saveBills(Double sales, OrderMaster orderId) {
+    OrderBills orderBills = new OrderBills();
+    orderBills.setOrder(orderId);
+    orderBills.setSales(Double.parseDouble(decimalFormat.format(sales)));
+    orderBills.setDue(Double.parseDouble(decimalFormat.format(sales)));
+    orderBills.setPayment(0.0);
+    orderBillsRepository.save(orderBills);
   }
 
   private ImportMaster getShipment(String shipment) {
@@ -146,10 +171,12 @@ public class OrderServiceImpl implements OrderService {
     if (optionalImportDetails.isEmpty()) {
       return null;
     } else {
-      if (optionalImportDetails.get().getUom().equals(UOM.KG_LT)) {
+      if (optionalImportDetails.get().getUom().equals(UOM.KG)) {
         return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getKgLt());
       } else if (optionalImportDetails.get().getUom().equals(UOM.PIECE)) {
         return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getPiece());
+      } else if (optionalImportDetails.get().getUom().equals(UOM.LT)) {
+        return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getKgLt());
       } else {
         return UomAndAvailableResponse.from(optionalImportDetails.get().getUom(), optionalImportDetails.get().getCartoon());
       }
@@ -161,7 +188,14 @@ public class OrderServiceImpl implements OrderService {
     List<OrderMaster> orderMasters = (List<OrderMaster>) orderMasterRepository.findAll();
     List<SingleBillResponse> singleBillResponses = new ArrayList<>();
     for (OrderMaster orderMaster : orderMasters) {
-      singleBillResponses.add(SingleBillResponse.from(orderMaster));
+      Optional<OrderBills> optionalOrderBills = orderBillsRepository.findFirstByOrderOrderByCreatedOnDesc(orderMaster);
+      if(optionalOrderBills.isPresent()){
+        singleBillResponses.add(SingleBillResponse.from(orderMaster, optionalOrderBills.get().getSales(),
+                optionalOrderBills.get().getDue()));
+      }else{
+        singleBillResponses.add(SingleBillResponse.from(orderMaster, 0.0,
+                0.0));
+      }
     }
     return AllBillsResponse.from(singleBillResponses);
   }
@@ -175,7 +209,7 @@ public class OrderServiceImpl implements OrderService {
       for (OrderDetails orderDetails : orderDetailsList) {
         singleBillsDetailsResponses.add(SingleBillsDetailsResponse.from(orderDetails));
       }
-      return BillsDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get()), singleBillsDetailsResponses);
+      return BillsDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get(), 0.0, 0.0), singleBillsDetailsResponses);
     } else {
       throw new RequestValidationException("Order id not found");
     }
@@ -190,7 +224,7 @@ public class OrderServiceImpl implements OrderService {
       for (OrderDetails orderDetails : orderDetailsList) {
         singleVatDetailsResponses.add(SingleVatDetailsResponse.from(orderDetails));
       }
-      return VatDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get()), singleVatDetailsResponses);
+      return VatDetailsResponse.from(SingleBillResponse.from(optionalOrderMaster.get(),0.0,0.0), singleVatDetailsResponses);
     } else {
       throw new RequestValidationException("Order id not found");
     }
@@ -277,15 +311,17 @@ public class OrderServiceImpl implements OrderService {
       List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
       for (OrderDetails orderDetails : orderDetailsList) {
         if (!uniqueProducts.containsKey(orderDetails.getProduct().getProductId())) {
-          uniqueProducts.put(orderDetails.getProduct().getProductName(), orderDetails.getQuantity());
+          uniqueProducts.put(orderDetails.getProduct().getProductId(), orderDetails.getQuantity());
         } else {
-          uniqueProducts.put(orderDetails.getProduct().getProductName(),
-                  uniqueProducts.get(orderDetails.getProduct().getProductName() + orderDetails.getQuantity()));
+          uniqueProducts.put(
+                  orderDetails.getProduct().getProductId(),
+                  uniqueProducts.get(orderDetails.getProduct().getProductId()) + orderDetails.getQuantity()
+          );
         }
       }
     }
     for (String string : uniqueProducts.keySet()) {
-      dailyShortResponses.add(DailyShortResponse.from(string, uniqueProducts.get(string)));
+      dailyShortResponses.add(DailyShortResponse.from(getProduct(string).getProductName(), uniqueProducts.get(string)));
     }
     return DailyOrderShortResponse.from(dailyShortResponses);
   }
@@ -361,49 +397,175 @@ public class OrderServiceImpl implements OrderService {
     double totalPiece = 0.0;
     double totalKg = 0.0;
     double totalCartoon = 0.0;
+
     for (UpdateOrderRequest updateOrderRequest : updateOrderRequestList) {
-      Optional<OrderDetails> orderDetails = orderDetailsRepository.findByOrderAndProduct
-              (getOrder(updateOrderRequest.getOrderId()), getProduct(updateOrderRequest.getProductId()));
+      Optional<OrderDetails> orderDetails = orderDetailsRepository.findByOrderAndProductAndShipment(
+              getOrder(updateOrderRequest.getOrderId()), getProduct(updateOrderRequest.getProductId()),
+              getImportMaster(updateOrderRequest.getShipment()));
+
       if (orderDetails.isPresent()) {
         Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
                 orderDetails.get().getProduct(), orderDetails.get().getShipment());
+
         if (importDetails.isPresent()) {
-          if (importDetails.get().getUom().equals(UOM.KG_LT)) {
-            Double cartoon = orderDetails.get().getQuantity() / importDetails.get().getUnitCartoon();
-            Double piece = orderDetails.get().getQuantity() / importDetails.get().getUnitPiece();
+          if (importDetails.get().getUom().equals(UOM.KG)) {
+            double cartoon = orderDetails.get().getQuantity() / importDetails.get().getUnitCartoon();
+            double piece = orderDetails.get().getQuantity() / importDetails.get().getUnitPiece();
             totalCartoon = totalCartoon + cartoon;
             totalPiece = totalPiece + piece;
             totalKg = totalKg + orderDetails.get().getQuantity();
-            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
-                    piece, cartoon, orderDetails.get().getQuantity()));
+            requisitionResponses.add(RequisitionResponse.from(
+                    orderDetails.get().getProduct().getProductName(),
+                    Double.parseDouble(decimalFormat.format(piece)),
+                    Double.parseDouble(decimalFormat.format(cartoon)),
+                    Double.parseDouble(decimalFormat.format(orderDetails.get().getQuantity()))));
+
+          } else if (importDetails.get().getUom().equals(UOM.LT)) {
+            double cartoon = orderDetails.get().getQuantity() / importDetails.get().getUnitCartoon();
+            double piece = orderDetails.get().getQuantity() / importDetails.get().getUnitPiece();
+            totalCartoon = totalCartoon + cartoon;
+            totalPiece = totalPiece + piece;
+            totalKg = totalKg + orderDetails.get().getQuantity();
+            requisitionResponses.add(RequisitionResponse.from(
+                    orderDetails.get().getProduct().getProductName(),
+                    Double.parseDouble(decimalFormat.format(piece)),
+                    Double.parseDouble(decimalFormat.format(cartoon)),
+                    Double.parseDouble(decimalFormat.format(orderDetails.get().getQuantity()))));
 
           } else if (importDetails.get().getUom().equals(UOM.PIECE)) {
-            Double cartoon = (orderDetails.get().getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon();
-            Double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
+            double cartoon = (orderDetails.get().getQuantity() * importDetails.get().getUnitPiece())
+                    / importDetails.get().getUnitCartoon();
+            double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
             totalCartoon = totalCartoon + cartoon;
             totalPiece = totalPiece + orderDetails.get().getQuantity();
             totalKg = totalKg + kgLt;
-            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
-                    orderDetails.get().getQuantity(), cartoon, kgLt));
+            requisitionResponses.add(RequisitionResponse.from(
+                    orderDetails.get().getProduct().getProductName(),
+                    Double.parseDouble(decimalFormat.format(orderDetails.get().getQuantity())),
+                    Double.parseDouble(decimalFormat.format(cartoon)),
+                    Double.parseDouble(decimalFormat.format(kgLt))));
+
           } else {
-            Double piece = (orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon()) / importDetails.get().getUnitPiece();
-            Double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
+            double piece = (orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon())
+                    / importDetails.get().getUnitPiece();
+            double kgLt = orderDetails.get().getQuantity() * importDetails.get().getUnitCartoon();
             totalCartoon = totalCartoon + orderDetails.get().getQuantity();
             totalPiece = totalPiece + piece;
             totalKg = totalKg + kgLt;
-            requisitionResponses.add(RequisitionResponse.from(orderDetails.get().getProduct().getProductName(),
-                    piece, orderDetails.get().getQuantity(), kgLt));
+            requisitionResponses.add(RequisitionResponse.from(
+                    orderDetails.get().getProduct().getProductName(),
+                    Double.parseDouble(decimalFormat.format(piece)),
+                    Double.parseDouble(decimalFormat.format(orderDetails.get().getQuantity())),
+                    Double.parseDouble(decimalFormat.format(kgLt))));
           }
         } else {
           throw new RequestValidationException("Shipment is not exist");
         }
+
         orderDetails.get().setStatus(OrderStatus.DELIVERED);
         orderDetailsRepository.save(orderDetails.get());
       } else {
         throw new RequestValidationException("Order is not exist");
       }
     }
-    return OrderRequisitionResponse.from(requisitionResponses, totalKg, totalCartoon, totalPiece);
+
+    return OrderRequisitionResponse.from(requisitionResponses,
+            Double.parseDouble(decimalFormat.format(totalKg)),
+            Double.parseDouble(decimalFormat.format(totalCartoon)),
+            Double.parseDouble(decimalFormat.format(totalPiece)));
+  }
+
+  @Override
+  public OrderPaymentResponse createPayment(PaymentRequest request) {
+    Optional<OrderBills> optionalOrderBills = orderBillsRepository.findFirstByOrderOrderByCreatedOnDesc(
+            getOrder(request.getOrderId()));
+    if(optionalOrderBills.isPresent()){
+      OrderBills orderBills = new OrderBills();
+      orderBills.setOrder(optionalOrderBills.get().getOrder());
+      orderBills.setSales(optionalOrderBills.get().getSales());
+      orderBills.setDue(Double.parseDouble(decimalFormat.format(optionalOrderBills.get().getDue() - request.getPayment())));
+      orderBills.setPayment(Double.parseDouble(decimalFormat.format(request.getPayment())));
+      orderBillsRepository.save(orderBills);
+      return OrderPaymentResponse.from();
+    }else{
+      throw new RequestValidationException("Order is not exist");
+    }
+  }
+
+  @Override
+  public AllPaymentsResponse getAllPayments() {
+    List<Customer> customers = (List<Customer>) customerRepository.findAll();
+    List<SinglePaymentResponse> singlePaymentResponses = new ArrayList<>();
+    for(Customer customer : customers){
+      List<OrderMaster> orderMasters = orderMasterRepository.findByCustomerOrderByCreatedOnDesc(customer);
+      double due = 0.0;
+      for(OrderMaster orderMaster : orderMasters){
+        Optional<OrderBills> optionalOrderBills = orderBillsRepository.findFirstByOrderOrderByCreatedOnDesc(orderMaster);
+        if(optionalOrderBills.isPresent()){
+          due = due + optionalOrderBills.get().getDue();
+        }
+      }
+      singlePaymentResponses.add(SinglePaymentResponse.from(customer.getCustomerId(), customer.getCustomerName(),
+              customer.getCompany(), due));
+    }
+    return AllPaymentsResponse.from(singlePaymentResponses);
+  }
+
+  @Override
+  public LedgerResponse getAllLedger(String customer) {
+    List<OrderMaster> orderMasters = orderMasterRepository.findByCustomer(getCustomer(customer));
+    List<AllLedgerResponse> allLedgerResponses = new ArrayList<>();
+    for(OrderMaster orderMaster: orderMasters){
+      List<OrderBills> orderBillsList = orderBillsRepository.findByOrder(orderMaster);
+      List<SingleLedgerResponse> singleLedgerResponseList = new ArrayList<>();
+      for(OrderBills orderBills : orderBillsList){
+        singleLedgerResponseList.add(SingleLedgerResponse.from(orderBills));
+      }
+      double discount = 0.0;
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(orderMaster);
+      for(OrderDetails orderDetails : orderDetailsList){
+        discount = discount + (orderDetails.getDiscount() * orderDetails.getPrice());
+      }
+      List<Returns> returnsList = returnsRepository.findByOrder(orderMaster);
+      for(Returns returns : returnsList){
+        Optional<OrderDetails> optionalOrderDetails = orderDetailsRepository.findByOrderAndProduct(orderMaster,
+                returns.getProduct());
+        if(optionalOrderDetails.isPresent()){
+          if(optionalOrderDetails.get().getUom().equals(UOM.LT)){
+            discount = discount + (returns.getKgLt() * optionalOrderDetails.get().getPrice());
+          } else if(optionalOrderDetails.get().getUom().equals(UOM.KG)){
+            discount = discount + (returns.getKgLt() * optionalOrderDetails.get().getPrice());
+          } else if(optionalOrderDetails.get().getUom().equals(UOM.PIECE)){
+            discount = discount + (returns.getPiece() * optionalOrderDetails.get().getPrice());
+          } else{
+            discount = discount + (returns.getCartoon() * optionalOrderDetails.get().getPrice());
+          }
+        }
+      }
+      allLedgerResponses.add(AllLedgerResponse.from(orderMaster, singleLedgerResponseList, discount));
+    }
+    return LedgerResponse.from(allLedgerResponses);
+  }
+
+  @Override
+  public AllOrderIdResponse getAllOrderId(String product) {
+    List<OrderDetails> orderDetailsList = orderDetailsRepository.findByProduct(getProduct(product));
+    List<SingleOrderId> singleOrderIds = new ArrayList<>();
+    for(OrderDetails orderDetails : orderDetailsList){
+      singleOrderIds.add(SingleOrderId.from(orderDetails.getOrder().getOrderId()));
+    }
+    return AllOrderIdResponse.from(singleOrderIds);
+  }
+
+  @Override
+  public GetUomResponse getProductUom(String product, Long order) {
+    Optional<OrderDetails> optionalOrderDetails = orderDetailsRepository.findByOrderAndProduct(
+            getOrder(order), getProduct(product));
+    if(optionalOrderDetails.isPresent()) {
+      return GetUomResponse.from(optionalOrderDetails.get().getUom());
+    }else{
+      throw new RequestValidationException("Order Id is not exist");
+    }
   }
 
   private EditOrderRequest findMatchingEditRequest(List<EditOrderRequest> editOrderRequests, String productName) {
@@ -460,11 +622,21 @@ public class OrderServiceImpl implements OrderService {
   }
 
   private Supplier getSupplier(String supplier) {
-    return null;
+    Optional<Supplier> optionalSupplier = supplierRepository.findBySupplierId(supplier);
+    if (optionalSupplier.isPresent()) {
+      return optionalSupplier.get();
+    } else {
+      throw new RequestValidationException("Supplier is not exist");
+    }
   }
 
-  private Branch getBranch(String branch) {
-    return null;
+  private Branch getBranch(String branch, Supplier supplier) {
+    Optional<Branch> optionalBranch = branchRepository.findByBranchNameAndSupplier(branch, supplier);
+    if(optionalBranch.isPresent()){
+      return optionalBranch.get();
+    }else{
+      throw new RequestValidationException("Branch is not exist");
+    }
   }
 
   private Product getProduct(String product) {
@@ -476,8 +648,9 @@ public class OrderServiceImpl implements OrderService {
     }
   }
 
-  private Sale getSale(String sale) {
-    Optional<Sale> optionalSale = saleRepository.findBySaleCode(sale);
+  private Sale getSale(String sale, String article, String supplierId, String value) {
+    Optional<Sale> optionalSale = saleRepository.findBySupplierAndProductAndArticleAndSaleCode(getSupplier(supplierId),
+            getProduct(value), article, sale);
     if (optionalSale.isPresent()) {
       return optionalSale.get();
     } else {
@@ -509,7 +682,21 @@ public class OrderServiceImpl implements OrderService {
             orderDetails.getProduct(), getImportMaster(commonRequest.getValue()));
     if (optionalImportDetails.isPresent()) {
       UOM uom = UOM.fromName(optionalImportDetails.get().getUom().getName());
-      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG_LT)) {
+      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG)) {
+        Double kgLt = optionalImportDetails.get().getKgLt() - orderDetails.getQuantity();
+
+        Double cartoon = optionalImportDetails.get().getCartoon() - (orderDetails.getQuantity() /
+                optionalImportDetails.get().getUnitCartoon());
+
+        Double piece = optionalImportDetails.get().getPiece() - (orderDetails.getQuantity() /
+                optionalImportDetails.get().getUnitPiece());
+
+        updateStockData(orderDetails.getQuantity(), orderDetails.getProduct());
+        optionalImportDetails.get().setCartoon(cartoon);
+        optionalImportDetails.get().setPiece(piece);
+        optionalImportDetails.get().setKgLt(kgLt);
+        importDetailsRepository.save(optionalImportDetails.get());
+      } else if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.LT)) {
         Double kgLt = optionalImportDetails.get().getKgLt() - orderDetails.getQuantity();
 
         Double cartoon = optionalImportDetails.get().getCartoon() - (orderDetails.getQuantity() /
@@ -574,7 +761,31 @@ public class OrderServiceImpl implements OrderService {
             orderDetails.getProduct(), getImportMaster(orderDetails.getShipment().getShipmentNo()));
     if (optionalImportDetails.isPresent()) {
       UOM uom = UOM.fromName(optionalImportDetails.get().getUom().getName());
-      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG_LT)) {
+      if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.KG)) {
+        if (orderDetails.getQuantity() < request.getQuantity()) {
+          Double kgLt = (optionalImportDetails.get().getKgLt()) - (request.getQuantity() - orderDetails.getQuantity());
+          Double cartoon = (optionalImportDetails.get().getCartoon()) - ((request.getQuantity() - orderDetails.getQuantity()) /
+                  optionalImportDetails.get().getUnitCartoon());
+          Double piece = (optionalImportDetails.get().getPiece()) - ((request.getQuantity() - orderDetails.getQuantity()) /
+                  optionalImportDetails.get().getUnitPiece());
+          updateStockData((request.getQuantity() - orderDetails.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        } else {
+          Double kgLt = (optionalImportDetails.get().getKgLt()) + (orderDetails.getQuantity() - request.getQuantity());
+          Double cartoon = (optionalImportDetails.get().getCartoon()) + ((orderDetails.getQuantity() - request.getQuantity()) /
+                  optionalImportDetails.get().getUnitCartoon());
+          Double piece = (optionalImportDetails.get().getPiece()) + ((orderDetails.getQuantity() - request.getQuantity()) /
+                  optionalImportDetails.get().getUnitPiece());
+          updateStockDataWhenEdit((orderDetails.getQuantity() - request.getQuantity()), orderDetails.getProduct());
+          optionalImportDetails.get().setCartoon(cartoon);
+          optionalImportDetails.get().setPiece(piece);
+          optionalImportDetails.get().setKgLt(kgLt);
+          importDetailsRepository.save(optionalImportDetails.get());
+        }
+      } else if ((Objects.equals(uom, orderDetails.getUom())) && Objects.equals(uom, UOM.LT)) {
         if (orderDetails.getQuantity() < request.getQuantity()) {
           Double kgLt = (optionalImportDetails.get().getKgLt()) - (request.getQuantity() - orderDetails.getQuantity());
           Double cartoon = (optionalImportDetails.get().getCartoon()) - ((request.getQuantity() - orderDetails.getQuantity()) /

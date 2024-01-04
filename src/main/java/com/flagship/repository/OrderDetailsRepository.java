@@ -1,6 +1,7 @@
 package com.flagship.repository;
 
 import com.flagship.constant.enums.OrderStatus;
+import com.flagship.model.db.ImportMaster;
 import com.flagship.model.db.OrderDetails;
 import com.flagship.model.db.OrderMaster;
 import com.flagship.model.db.Product;
@@ -18,5 +19,7 @@ public interface OrderDetailsRepository extends PagingAndSortingRepository<Order
 
   List<OrderDetails> findByOrderAndStatus(OrderMaster orderMaster, OrderStatus orderStatus);
 
-  Optional<OrderDetails> findByOrderAndProduct(OrderMaster order, Product product);
+  Optional<OrderDetails> findByOrderAndProductAndShipment(OrderMaster order, Product product, ImportMaster importMaster);
+
+  Optional<OrderDetails> findByOrderAndProduct(OrderMaster orderMaster, Product product);
 }

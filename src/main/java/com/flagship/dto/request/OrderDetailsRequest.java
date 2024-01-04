@@ -14,8 +14,8 @@ public class OrderDetailsRequest {
   @Valid
   @NotNull
   private CommonRequest shipment;
-  private String sale;
   private String saleCode;
+  private String article;
   private Double vat;
   @Valid
   @NotNull

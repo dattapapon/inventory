@@ -9,11 +9,12 @@ import lombok.Data;
 public class SingleBranchResponse {
   private String branchCode;
   private String branchName;
+  private String address;
 
   public static SingleBranchResponse from(Branch branch) {
     return SingleBranchResponse.builder()
-            .branchCode(branch.getBranchCode())
             .branchName(branch.getBranchName())
+            .address(branch.getAddress())
             .build();
   }
 }

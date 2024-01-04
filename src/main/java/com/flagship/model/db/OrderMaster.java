@@ -38,7 +38,7 @@ public class OrderMaster implements Serializable {
   private Supplier supplier;
 
   @ManyToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = DbOrderMaster.BRANCH, referencedColumnName = DbBranch.BRANCH_CODE)
+  @JoinColumn(name = DbOrderMaster.BRANCH, referencedColumnName = DbBranch.ID)
   private Branch branch;
 
   @Enumerated(value = EnumType.STRING)
@@ -52,7 +52,7 @@ public class OrderMaster implements Serializable {
   private ZonedDateTime deliveryDate;
 
   @Column(name = DbOrderMaster.CREDIT_TERM)
-  private ZonedDateTime creditTerm;
+  private Integer creditTerm;
 
   @Column(name = DbOrderMaster.CHALLAN, nullable = false)
   private Integer challan;

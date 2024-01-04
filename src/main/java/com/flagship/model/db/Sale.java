@@ -38,9 +38,6 @@ public class Sale implements Serializable {
   @Column(name = DbSale.SALE_CODE, nullable = false)
   private String saleCode;
 
-  @Column(name = DbSale.SALE_NAME, nullable = false)
-  private String saleName;
-
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbSale.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
   private User createdBy;

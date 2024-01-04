@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 public enum UOM {
-  KG_LT(1),
+  KG(1),
   PIECE(2),
   CARTOON(3),
+  LT(4),
   ;
 
   UOM(int type) {
@@ -16,11 +17,13 @@ public enum UOM {
   public static UOM fromValue(int value) {
     switch (value) {
       case 1:
-        return KG_LT;
+        return KG;
       case 2:
         return PIECE;
       case 3:
         return CARTOON;
+      case 4:
+        return LT;
       default:
         return null;
     }
@@ -29,12 +32,14 @@ public enum UOM {
   @JsonCreator
   public static UOM fromName(String name) {
     switch (StringUtils.upperCase(name)) {
-      case "KG_LT":
-        return KG_LT;
+      case "KG":
+        return KG;
       case "PIECE":
         return PIECE;
       case "CARTOON":
         return CARTOON;
+      case "LT":
+        return LT;
       default:
         return null;
     }

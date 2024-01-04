@@ -13,14 +13,15 @@ public class BranchResponse {
   private String supplier;
   private String branchCode;
   private String branchName;
+  private String branchAddress;
 
   public static BranchResponse from(String message, Branch branch) {
     return BranchResponse.builder()
             .code(HttpStatus.SC_OK)
             .message(message)
             .supplier(branch.getSupplier().getSupplierName())
-            .branchCode(branch.getBranchCode())
             .branchName(branch.getBranchName())
+            .branchAddress(branch.getAddress())
             .build();
   }
 }

@@ -13,7 +13,6 @@ public class SaleResponse {
   private String supplier;
   private String product;
   private String saleCode;
-  private String saleName;
 
   public static SaleResponse from(String message, Sale sale) {
     return SaleResponse.builder()
@@ -22,7 +21,6 @@ public class SaleResponse {
             .supplier(sale.getSupplier().getSupplierName())
             .product(sale.getProduct().getProductName())
             .saleCode(sale.getSaleCode())
-            .saleName(sale.getSaleName())
             .build();
   }
 }

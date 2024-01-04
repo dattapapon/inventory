@@ -13,6 +13,7 @@ import java.util.Date;
 public class DateUtil {
 
   public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
   public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
   private static final ZoneOffset ZONE_OFFSET = ZoneOffset.UTC;
   private static final String offset = "+06:00";
@@ -64,7 +65,7 @@ public class DateUtil {
     if (dateTime == null) {
       return null;
     } else {
-      return DATE_FORMATTER.format(dateTime);
+      return FORMATTER.format(dateTime);
     }
   }
 

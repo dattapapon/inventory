@@ -46,15 +46,14 @@ public class Customer implements Serializable {
   @JoinColumn(name = DbCustomer.SUPPLIER, referencedColumnName = DbSupplier.SUPPLIER_ID)
   private Supplier supplier;
 
-  @ManyToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = DbCustomer.BRANCH, referencedColumnName = DbBranch.BRANCH_CODE)
-  private Branch Branch;
-
   @Column(name = DbCustomer.ADDRESS)
   private String address;
 
   @Column(name = DbCustomer.BIN_NO)
   private String binNo;
+
+  @Column(name = DbCustomer.CREDIT_TERM)
+  private Integer creditTerm;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbCustomer.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)
