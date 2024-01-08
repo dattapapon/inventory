@@ -26,4 +26,6 @@ public interface OrderMasterRepository extends PagingAndSortingRepository<OrderM
   List<OrderMaster> findByDeliveryDateBetween(ZonedDateTime start, ZonedDateTime end);
 
   List<OrderMaster> findByCustomer(Customer customer);
+
+  List<OrderMaster> findByOrderByCreatedOnDesc();
 }

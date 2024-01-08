@@ -29,7 +29,7 @@ public class SingleBillResponse {
             .orderDate(DateUtil.getFormattedDate(orderMaster.getOrderDate()))
             .company(orderMaster.getCompanyName())
             .address(orderMaster.getCustomer().getAddress())
-            .delivery(orderMaster.getBranch().getBranchName() +"/" + orderMaster.getAddress())
+            .delivery(orderMaster.getBranch().getBranchName() +"/" + orderMaster.getAddress()) 
             .bin(orderMaster.getCustomer().getBinNo())
             .challan(orderMaster.getChallan())
             .sales(sales)

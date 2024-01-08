@@ -185,7 +185,7 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   public AllBillsResponse getBills() {
-    List<OrderMaster> orderMasters = (List<OrderMaster>) orderMasterRepository.findAll();
+    List<OrderMaster> orderMasters = orderMasterRepository.findByOrderByCreatedOnDesc();
     List<SingleBillResponse> singleBillResponses = new ArrayList<>();
     for (OrderMaster orderMaster : orderMasters) {
       Optional<OrderBills> optionalOrderBills = orderBillsRepository.findFirstByOrderOrderByCreatedOnDesc(orderMaster);
@@ -354,7 +354,25 @@ public class OrderServiceImpl implements OrderService {
       }
     }
     orderDetailsRepository.saveAll(orderDetails1);
+    updateOrderBills(orderId);
     return EditOrderResponse.from();
+  }
+
+  private void updateOrderBills(Long orderId) {
+    List<OrderDetails> orderDetailsList = orderDetailsRepository.findAllByOrder(getOrder(orderId));
+    double total = 0.0;
+    for(OrderDetails orderDetails : orderDetailsList){
+      total = total + orderDetails.getTotalPrice();
+    }
+    Optional<OrderBills> optionalOrderBills = orderBillsRepository.findFirstByOrderOrderByCreatedOnDesc(getOrder(orderId));
+    if(optionalOrderBills.isPresent()){
+      double payment = optionalOrderBills.get().getPayment();
+      optionalOrderBills.get().setSales(total);
+      optionalOrderBills.get().setDue(total - optionalOrderBills.get().getPayment());
+      orderBillsRepository.save(optionalOrderBills.get());
+    }else {
+      throw new RequestValidationException("No bills found for this Order id: " + orderId);
+    }
   }
 
   @Override
