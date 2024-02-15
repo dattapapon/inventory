@@ -23,20 +23,27 @@ public class SingleVatDetailsResponse {
     SingleVatDetailsResponse.SingleVatDetailsResponseBuilder builder = SingleVatDetailsResponse.builder()
             .product(orderDetails.getProduct().getProductName())
             .uom(orderDetails.getUom())
-            .quantity(orderDetails.getQuantity())
-            .price(orderDetails.getPrice())
-            .total(orderDetails.getTotalPrice());
-    Double totalVatAmount;
+            .quantity(orderDetails.getQuantity());
     if (orderDetails.getVat() != null) {
       builder.vat(orderDetails.getVat() + "%");
 
-      totalVatAmount = (((orderDetails.getVat() / 100.0)) * orderDetails.getPrice()) * orderDetails.getQuantity();
+      // Calculate price, total, and totalVatAmount with rounding
+      Double productPrice = Math.round((orderDetails.getPrice() * 100.0) / (orderDetails.getVat() + 100.0) * 100.0) / 100.0;
+      Double totalProductPrice = Math.round(productPrice * orderDetails.getQuantity() * 100.0) / 100.0;
+      Double vatPrice = Math.round((orderDetails.getPrice() - Math.round((orderDetails.getPrice() * 100.0) /
+              (orderDetails.getVat() + 100.0) * 100.0) / 100.0) *100) / 100.0;
+      Double totalVatAmount = Math.round(vatPrice * orderDetails.getQuantity() * 100.0) / 100.0;
+
       builder.vatAmount(totalVatAmount);
-      builder.totalAmountWithVatTax(orderDetails.getTotalPrice() + totalVatAmount);
+      builder.totalAmountWithVatTax(Math.round((totalProductPrice + totalVatAmount) * 100.0) / 100.0);
+      builder.price(productPrice);
+      builder.total(totalProductPrice);
     } else {
       builder.vat("0.00%");
       builder.vatAmount(null);
       builder.totalAmountWithVatTax(orderDetails.getTotalPrice());
+      builder.price(orderDetails.getPrice());
+      builder.total(orderDetails.getTotalPrice());
     }
     return builder.build();
   }

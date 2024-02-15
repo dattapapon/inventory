@@ -7,18 +7,20 @@ import com.flagship.exception.RequestValidationException;
 import lombok.Data;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Data
-public class WastageAddRequest implements RequestValidator {
+public class WastageDetailsRequest implements RequestValidator {
   @Valid
   @NotNull
   private CommonRequest product;
   @Valid
   @NotNull
   private CommonRequest shipment;
+  @Valid
+  @NotNull
+  private CommonRequest wastageFrom;
   @Valid
   @NotNull
   private UOM uom;
@@ -28,9 +30,6 @@ public class WastageAddRequest implements RequestValidator {
   @Valid
   @NotNull
   private Cause cause;
-  @Valid
-  @NotEmpty
-  private String user;
 
   @Override
   public void validate() {

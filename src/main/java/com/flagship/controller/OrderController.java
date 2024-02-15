@@ -1,9 +1,6 @@
 package com.flagship.controller;
 
-import com.flagship.dto.request.EditOrderRequest;
-import com.flagship.dto.request.OrderMasterRequest;
-import com.flagship.dto.request.PaymentRequest;
-import com.flagship.dto.request.UpdateOrderRequest;
+import com.flagship.dto.request.*;
 import com.flagship.dto.response.*;
 import com.flagship.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +34,11 @@ public class OrderController {
   }
 
   @GetMapping(
-          value = "/challan",
+          value = "/invoice",
           produces = MediaType.APPLICATION_JSON_VALUE
   )
-  public ResponseEntity<ChallanResponse> getCustomerLastChallan(@RequestParam(value = "customerId") String customer) {
-    ChallanResponse response = orderService.getCustomerChallan(customer);
+  public ResponseEntity<ChallanResponse> getLastInvoice() {
+    ChallanResponse response = orderService.getLastInvoice();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -135,8 +132,8 @@ public class OrderController {
           value = "/return",
           produces = MediaType.APPLICATION_JSON_VALUE
   )
-  public ResponseEntity<ReturnDetailsResponse> getReturn(@RequestParam(value = "order") Long orderId) {
-    ReturnDetailsResponse response = orderService.getReturn(orderId);
+  public ResponseEntity<ReturnDetailsResponse> getReturn(@RequestParam(value = "serial") Long serial) {
+    ReturnDetailsResponse response = orderService.getReturn(serial);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -151,7 +148,6 @@ public class OrderController {
 
   @PutMapping(
           value = "/status",
-          consumes = MediaType.APPLICATION_JSON_VALUE,
           produces = MediaType.APPLICATION_JSON_VALUE
   )
   public ResponseEntity<OrderRequisitionResponse> updateOrderStatus(@RequestBody @Valid @NotNull
@@ -159,6 +155,7 @@ public class OrderController {
     OrderRequisitionResponse response = orderService.updateOrderStatus(selectedRows);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
+
   @PostMapping(
           value = "/payment",
           consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -168,6 +165,7 @@ public class OrderController {
     OrderPaymentResponse response = orderService.createPayment(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
+
   @GetMapping(
           value = "/payments",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -185,6 +183,7 @@ public class OrderController {
     LedgerResponse response = orderService.getAllLedger(customer);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
+
   @GetMapping(
           value = "/product",
           produces = MediaType.APPLICATION_JSON_VALUE
@@ -193,13 +192,52 @@ public class OrderController {
     AllOrderIdResponse response = orderService.getAllOrderId(product);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
+
   @GetMapping(
           value = "/uom",
           produces = MediaType.APPLICATION_JSON_VALUE
   )
   public ResponseEntity<GetUomResponse> getProductUom(@RequestParam(value = "product") String product,
-                                                               @RequestParam(value = "order") Long order) {
-    GetUomResponse response = orderService.getProductUom(product, order);
+                                                      @RequestParam(value = "order") Long order,
+                                                      @RequestParam(value = "warehouse") String warehouse) {
+    GetUomResponse response = orderService.getProductUom(product, order, warehouse);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/waiting",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<AllPendingOrdersResponse> getWaitingOrder() {
+    AllPendingOrdersResponse response = orderService.getWaitingOrder();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @PutMapping(
+          value = "/waiting_status",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderRequisitionResponse> updateOrderWaitingStatus(@RequestBody @Valid @NotNull
+                                                                           UpdateOrder updateOrder) {
+    OrderRequisitionResponse response = orderService.updateOrderWaitingStatus(updateOrder);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @GetMapping(
+          value = "/requisition",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderRequisitionResponse> getRequisition(@RequestParam(value = "serial") Long serial) {
+    OrderRequisitionResponse response = orderService.getRequisition(serial);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/warehouse",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<OrderWarehouseResponse> getWarehouse(@RequestParam(value = "product") String product,
+                                                        @RequestParam(value = "order") Long order) {
+    OrderWarehouseResponse response = orderService.getAllWarehouse(product, order);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

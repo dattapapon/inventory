@@ -159,6 +159,7 @@ public class DbConstant {
     public static final String PRICE = "price";
     public static final String TOTAL_PRICE = "total";
     public static final String ORDER_STATUS = "status";
+    public static final String WAREHOUSE = "warehouse";
   }
   public static class DbOrderBills extends DbCommon {
     public static final String TABLE_NAME = "order_bills";
@@ -176,6 +177,8 @@ public class DbConstant {
     public static final String PIECE = "piece";
     public static final String KG_LT = "kg_lt";
     public static final String CAUSE = "cause";
+    public static final String WAREHOUSE = "warehouse";
+    public static final String SERIAL_NO = "serial_no";
   }
 
   public static class DbReturn extends DbCommon {
@@ -187,6 +190,20 @@ public class DbConstant {
     public static final String ORDER = "orders";
     public static final String DELIVERY_MAN = "delivery_man";
     public static final String CAUSE = "cause";
+    public static final String SERIAL_NO = "serial_no";
+    public static final String WAREHOUSE = "warehouse";
+    public static final String CUSTOMER = "customer";
+    public static final String BRANCH = "branch";
+  }
+
+  public static class DbRequisition extends DbCommon {
+    public static final String TABLE_NAME = "requisition";
+    public static final String PRODUCT = "product";
+    public static final String PIECE = "piece";
+    public static final String QUANTITY = "quantity";
+    public static final String DELIVERY_MAN = "delivery_man";
+    public static final String SERIAL_NO = "serial_no";
+    public static final String WAREHOUSE = "warehouse";
   }
 }
 

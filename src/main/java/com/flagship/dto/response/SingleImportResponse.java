@@ -42,7 +42,7 @@ public class SingleImportResponse {
             .expire(DateUtil.getFormattedDate(importDetails.getExpire()))
             .cartoon(importDetails.getCartoon())
             .piece(importDetails.getPiece())
-            .kgLt(importDetails.getPiece())
+            .kgLt(importDetails.getKgLt())
             .uom(importDetails.getUom())
             .price(importDetails.getPrice())
             .total(importDetails.getTotal())

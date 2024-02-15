@@ -3,6 +3,7 @@ package com.flagship.model.db;
 import com.flagship.constant.db.DbConstant.*;
 import com.flagship.constant.enums.OrderStatus;
 import com.flagship.constant.enums.UOM;
+import com.flagship.constant.enums.Warehouse;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -36,6 +37,10 @@ public class OrderDetails implements Serializable {
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbOrderDetails.SHIPMENT, referencedColumnName = DbImportMaster.SHIPMENT_NO, nullable = false)
   private ImportMaster shipment;
+
+  @Enumerated(value = EnumType.STRING)
+  @Column(name = DbOrderDetails.WAREHOUSE, nullable = false)
+  private Warehouse warehouse;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbOrderDetails.SALE, referencedColumnName = DbSale.ID)

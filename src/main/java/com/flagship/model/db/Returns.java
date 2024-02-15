@@ -1,10 +1,13 @@
 package com.flagship.model.db;
 
+import com.flagship.constant.db.DbConstant.DbBranch;
+import com.flagship.constant.db.DbConstant.DbCustomer;
 import com.flagship.constant.db.DbConstant.DbOrderMaster;
 import com.flagship.constant.db.DbConstant.DbProduct;
 import com.flagship.constant.db.DbConstant.DbReturn;
 import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.enums.Cause;
+import com.flagship.constant.enums.Warehouse;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -33,6 +36,14 @@ public class Returns implements Serializable {
   @JoinColumn(name = DbReturn.PRODUCT, referencedColumnName = DbProduct.PRODUCT_ID, nullable = false)
   private Product product;
 
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbReturn.CUSTOMER, referencedColumnName = DbCustomer.CUSTOMER_ID, nullable = false)
+  private Customer customer;
+
+  @ManyToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = DbReturn.BRANCH, referencedColumnName = DbBranch.ID, nullable = false)
+  private Branch branch;
+
   @Column(name = DbReturn.CARTOON)
   private Double cartoon;
 
@@ -48,6 +59,13 @@ public class Returns implements Serializable {
   @Enumerated(value = EnumType.STRING)
   @Column(name = DbReturn.CAUSE)
   private Cause cause;
+
+  @Enumerated(value = EnumType.STRING)
+  @Column(name = DbReturn.WAREHOUSE, nullable = false)
+  private Warehouse warehouse;
+
+  @Column(name = DbReturn.SERIAL_NO)
+  private Long serialNo;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbReturn.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)

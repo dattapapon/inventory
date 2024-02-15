@@ -11,7 +11,6 @@ import javax.sound.midi.Soundbank;
 @Builder
 public class SingleWastageResponse {
   private String product;
-  private String shipment;
   private Double cartoon;
   private Double piece;
   private Double kgLt;
@@ -19,7 +18,6 @@ public class SingleWastageResponse {
   public static SingleWastageResponse from(Wastage wastage){
     return SingleWastageResponse.builder()
             .product(wastage.getProduct().getProductName())
-            .shipment(wastage.getShipment().getShipmentNo())
             .cartoon(wastage.getCartoon())
             .piece(wastage.getPiece())
             .kgLt(wastage.getKgLt())

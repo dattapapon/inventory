@@ -114,7 +114,7 @@ public class CommonController {
           produces = MediaType.APPLICATION_JSON_VALUE
   )
   public ResponseEntity<AllBranchResponse> getBranch(@RequestParam(value = "supplier") String supplier) {
-    AllBranchResponse allBranchResponse = commonService.getBranch(supplier);
+    AllBranchResponse allBranchResponse = commonService.getAllBranch(supplier);
     return new ResponseEntity<>(allBranchResponse, HttpStatus.OK);
   }
   @GetMapping(
@@ -191,8 +191,8 @@ public class CommonController {
           consumes = MediaType.APPLICATION_JSON_VALUE,
           produces = MediaType.APPLICATION_JSON_VALUE
   )
-  public ResponseEntity<WastageResponse> addWastage(@Valid @NotNull @RequestBody WastageAddRequest wastageAddRequest) {
-    WastageResponse wastageResponse = commonService.addWastage(wastageAddRequest);
+  public ResponseEntity<WastageAddResponse> addWastage(@Valid @NotNull @RequestBody WastageMasterRequest wastageMasterRequest) {
+    WastageAddResponse wastageResponse = commonService.addWastage(wastageMasterRequest);
     return new ResponseEntity<>(wastageResponse, HttpStatus.OK);
   }
 
@@ -201,8 +201,8 @@ public class CommonController {
           consumes = MediaType.APPLICATION_JSON_VALUE,
           produces = MediaType.APPLICATION_JSON_VALUE
   )
-  public ResponseEntity<ReturnResponse> addReturn(@Valid @NotNull @RequestBody ReturnRequest request) {
-    ReturnResponse response = commonService.addReturn(request);
+  public ResponseEntity<ReturnAddResponse> addReturn(@Valid @NotNull @RequestBody ReturnMasterRequest request) {
+    ReturnAddResponse response = commonService.addReturn(request);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -226,8 +226,24 @@ public class CommonController {
           value = "/wastage",
           produces = MediaType.APPLICATION_JSON_VALUE
   )
-  public ResponseEntity<AllWastageResponse> getAllWastage() {
-    AllWastageResponse response = commonService.getAllWastage();
+  public ResponseEntity<SuccessWastageResponseUsingSerial> getAllWastage() {
+    SuccessWastageResponseUsingSerial response = commonService.getAllWastage();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/return",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<SuccessReturnResponseUsingSerial> getAllReturn() {
+    SuccessReturnResponseUsingSerial response = commonService.getAllReturn();
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+  @GetMapping(
+          value = "/requisition",
+          produces = MediaType.APPLICATION_JSON_VALUE
+  )
+  public ResponseEntity<SuccessRequisitionResponseUsingSerial> getAllRequisition() {
+    SuccessRequisitionResponseUsingSerial response = commonService.getAllRequisition();
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 }

@@ -12,7 +12,6 @@ public class SingleReturnResponse {
   private Double piece;
   private String quantity;
   private Cause cause;
-
   public static SingleReturnResponse from(Returns returns) {
     return SingleReturnResponse.builder()
             .product(returns.getProduct().getProductName())

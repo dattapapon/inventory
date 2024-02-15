@@ -4,6 +4,7 @@ import com.flagship.constant.enums.UOM;
 import com.flagship.constant.enums.Warehouse;
 import com.flagship.dto.request.ImportDetailsRequest;
 import com.flagship.dto.request.ImportRequest;
+import com.flagship.dto.request.MoveRequest;
 import com.flagship.dto.response.*;
 import com.flagship.exception.RequestValidationException;
 import com.flagship.model.db.*;
@@ -13,10 +14,8 @@ import com.flagship.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.text.DecimalFormat;
+import java.util.*;
 
 @Service
 public class ImportServiceImpl implements ImportService {
@@ -29,6 +28,7 @@ public class ImportServiceImpl implements ImportService {
   private final BrandRepository brandRepository;
   private final StockRepository stockRepository;
   private final WastageRepository wastageRepository;
+  private final DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
   @Autowired
   public ImportServiceImpl(ProductRepository productRepository, UserRepository userRepository,
@@ -75,8 +75,12 @@ public class ImportServiceImpl implements ImportService {
   public ShipmentResponse getShipment(String product) {
     List<ImportDetails> importDetailsList = importDetailsRepository.findByProduct(getProducts(product));
     List<SingleShipment> shipmentList = new ArrayList<>();
+    HashMap<String, String> uniqueShipment = new HashMap<>();
     for (ImportDetails importDetails : importDetailsList) {
-      shipmentList.add(SingleShipment.from(importDetails));
+      if(!uniqueShipment.containsKey(importDetails.getImportMaster().getShipmentNo())) {
+        shipmentList.add(SingleShipment.from(importDetails));
+        uniqueShipment.put(importDetails.getImportMaster().getShipmentNo(), importDetails.getImportMaster().getShipmentNo());
+      }
     }
     return ShipmentResponse.from(shipmentList);
   }
@@ -95,9 +99,9 @@ public class ImportServiceImpl implements ImportService {
   }
 
   @Override
-  public GetUomAndAvailableResponse getProductUomAndAvailable(String product, String shipment) {
-    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
-            getProducts(product), getImportMaster(shipment));
+  public GetUomAndAvailableResponse getProductUomAndAvailable(String product, String shipment, String warehouse) {
+    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMasterAndWarehouse(
+            getProducts(product), getImportMaster(shipment), Warehouse.valueOf(warehouse));
     GetUomAndAvailableResponse getUomAndAvailableResponse = null;
     if (importDetails.isPresent()) {
       if (importDetails.get().getUom().equals(UOM.LT)) {
@@ -113,18 +117,20 @@ public class ImportServiceImpl implements ImportService {
         getUomAndAvailableResponse = GetUomAndAvailableResponse.from(importDetails.get().getUom(), importDetails.get().getCartoon());
       }
     } else {
-      throw new RequestValidationException("Any record is not exist for Product: " + product + " and Shipment: " + shipment);
+      throw new RequestValidationException("Any record is not exist for Product: " + product + " and Shipment: " + shipment
+              + " and Warehouse: " + warehouse);
     }
     return getUomAndAvailableResponse;
   }
 
   @Override
-  public WastageDetailsResponse getWastage(String shipment) {
-    List<Wastage> wastageList = wastageRepository.findByShipment(getImportMaster(shipment));
+  public WastageDetailsResponse getWastage(Long serial) {
+    List<Wastage> wastageList = wastageRepository.findBySerialNo(serial);
     List<SingleWastageSlipResponse> singleWastageSlipResponses = new ArrayList<>();
     double piece = 0.0;
     double cartoon = 0.0;
     double kgLt = 0.0;
+    Wastage was = wastageList.get(0);
     for (Wastage wastage : wastageList) {
       piece = piece + wastage.getPiece();
       cartoon = cartoon + wastage.getCartoon();
@@ -132,10 +138,111 @@ public class ImportServiceImpl implements ImportService {
       singleWastageSlipResponses.add(SingleWastageSlipResponse.from(wastage));
     }
     if (!wastageList.isEmpty()) {
-      return WastageDetailsResponse.from(piece, cartoon, kgLt, singleWastageSlipResponses);
+      return WastageDetailsResponse.from(piece, cartoon, kgLt, was.getWarehouse(), was.getCreatedBy().getName(),
+              was.getCreatedOn(), was.getSerialNo(),singleWastageSlipResponses);
     } else {
       return null;
     }
+  }
+
+  @Override
+  public WarehouseResponse getWarehouse(String product, String shipment) {
+    List<ImportDetails> importDetailsList = importDetailsRepository.findByImportMasterAndProduct(
+            getImportMaster(shipment), getProducts(product));
+    List<SingleWarehouse> warehouseList = new ArrayList<>();
+    for (ImportDetails importDetails : importDetailsList) {
+      warehouseList.add(SingleWarehouse.from(importDetails));
+    }
+    return WarehouseResponse.from(warehouseList);
+  }
+
+  @Override
+  public ImportResponse moveImport(List<MoveRequest> moveRequestList) {
+    List<ImportDetailsResponse> importDetailsResponseList = new ArrayList<>();
+    for(MoveRequest moveRequest : moveRequestList){
+      System.out.println("Warehouse: " + moveRequest.getMoveFrom().getValue());
+      Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMasterAndWarehouse(
+              getProducts(moveRequest.getProduct().getValue()), getImportMaster(moveRequest.getShipment().getValue()),
+              Warehouse.valueOf(moveRequest.getMoveFrom().getValue()));
+      if(importDetails.isPresent()){
+        ImportDetails move = new ImportDetails();
+        move.setImportMaster(importDetails.get().getImportMaster());
+        move.setProduct(importDetails.get().getProduct());
+        move.setCategories(importDetails.get().getCategories());
+        move.setBrand(importDetails.get().getBrand());
+        move.setCountry(importDetails.get().getCountry());
+        if (importDetails.get().getProduction() != null) {
+          move.setProduction(importDetails.get().getProduction());
+        }
+        move.setUnitCartoon(importDetails.get().getUnitCartoon());
+        move.setWarehouse(moveRequest.getMoveTo());
+        move.setUnitPiece(importDetails.get().getUnitPiece());
+        if (importDetails.get().getExpire() != null) {
+          move.setExpire(importDetails.get().getExpire());
+        }
+        move.setUom(importDetails.get().getUom());
+        if((importDetails.get().getUom().equals(UOM.LT)) || (importDetails.get().getUom().equals(UOM.KG))) {
+          move.setCartoon(moveRequest.getQuantity() / importDetails.get().getUnitCartoon());
+          move.setPiece(moveRequest.getQuantity() / importDetails.get().getUnitPiece());
+          move.setKgLt(moveRequest.getQuantity());
+
+          Double kgLt = importDetails.get().getKgLt() - moveRequest.getQuantity();
+          Double cartoon = importDetails.get().getCartoon() - (moveRequest.getQuantity() /
+                  importDetails.get().getUnitCartoon());
+
+          Double piece = importDetails.get().getPiece() - (moveRequest.getQuantity() /
+                  importDetails.get().getUnitPiece());
+
+          importDetails.get().setCartoon(cartoon);
+          importDetails.get().setPiece(piece);
+          importDetails.get().setKgLt(kgLt);
+        }
+        else if(importDetails.get().getUom().equals(UOM.PIECE)) {
+          move.setPiece(moveRequest.getQuantity());
+          move.setCartoon((moveRequest.getQuantity() *
+                  importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon());
+          move.setKgLt(moveRequest.getQuantity() * importDetails.get().getUnitPiece());
+
+          Double piece = importDetails.get().getPiece() - (moveRequest.getQuantity());
+          Double cartoon = importDetails.get().getCartoon() - ((moveRequest.getQuantity() *
+                  importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon());
+          Double kgLt = importDetails.get().getKgLt() - (moveRequest.getQuantity() *
+                  importDetails.get().getUnitPiece());
+
+          importDetails.get().setCartoon(cartoon);
+          importDetails.get().setPiece(piece);
+          importDetails.get().setKgLt(kgLt);
+        } else {
+          move.setCartoon(moveRequest.getQuantity());
+          move.setPiece((moveRequest.getQuantity() * importDetails.get().getUnitCartoon())
+                  / importDetails.get().getUnitPiece());
+          move.setKgLt(moveRequest.getQuantity() * importDetails.get().getUnitCartoon());
+
+          Double cartoon = importDetails.get().getCartoon() - moveRequest.getQuantity();
+          Double piece = importDetails.get().getPiece() -
+                  ((moveRequest.getQuantity() * importDetails.get().getUnitCartoon())
+                          / importDetails.get().getUnitPiece());
+          Double kgLt = importDetails.get().getKgLt() - (moveRequest.getQuantity() *
+                  importDetails.get().getUnitCartoon());
+
+          importDetails.get().setCartoon(cartoon);
+          importDetails.get().setPiece(piece);
+          importDetails.get().setKgLt(kgLt);
+        }
+        move.setPrice(importDetails.get().getPrice());
+        move.setTotal(importDetails.get().getPrice() * moveRequest.getQuantity());
+        importDetails.get().setTotal(importDetails.get().getTotal() - (importDetails.get().getPrice() *
+                moveRequest.getQuantity()));
+        move.setCreatedBy(getUser(moveRequest.getUser()));
+        importDetailsRepository.save(move);
+        importDetailsRepository.save(importDetails.get());
+        importDetailsResponseList.add(ImportDetailsResponse.from(move));
+      }else {
+        throw new RequestValidationException("No records found for this product: " + moveRequest.getProduct().getLabel());
+      }
+    }
+    ImportMaster importMaster = getImportMaster(moveRequestList.get(0).getShipment().getValue());
+    return ImportResponse.from("Product move successfully", importMaster, importDetailsResponseList);
   }
 
   private ImportMaster getImportMaster(String shipment) {
@@ -182,14 +289,16 @@ public class ImportServiceImpl implements ImportService {
       if (importDetailsRequest.getExpire() != null && !importDetailsRequest.getExpire().isEmpty()) {
         importDetails.setExpire(DateUtil.getZoneDateTime(importDetailsRequest.getExpire() + "T00:00:00"));
       }
-      importDetails.setUnitCartoon(importDetailsRequest.getKgLt() / importDetailsRequest.getCartoon());
-      importDetails.setCartoon(importDetailsRequest.getCartoon());
-      importDetails.setUnitPiece(importDetailsRequest.getKgLt() / importDetailsRequest.getPiece());
-      importDetails.setPiece(importDetailsRequest.getPiece());
-      importDetails.setKgLt(importDetailsRequest.getKgLt());
+      importDetails.setUnitCartoon(Double.parseDouble(decimalFormat.format(importDetailsRequest.getKgLt() /
+              importDetailsRequest.getCartoon())));
+      importDetails.setCartoon(Double.parseDouble(decimalFormat.format(importDetailsRequest.getCartoon())));
+      importDetails.setUnitPiece(Double.parseDouble(decimalFormat.format(importDetailsRequest.getKgLt() /
+              importDetailsRequest.getPiece())));
+      importDetails.setPiece(Double.parseDouble(decimalFormat.format(importDetailsRequest.getPiece())));
+      importDetails.setKgLt(Double.parseDouble(decimalFormat.format(importDetailsRequest.getKgLt())));
       importDetails.setUom(UOM.fromName(importDetailsRequest.getUom().getName()));
-      importDetails.setPrice(importDetailsRequest.getPrice());
-      importDetails.setTotal(importDetailsRequest.getTotal());
+      importDetails.setPrice(Double.parseDouble(decimalFormat.format(importDetailsRequest.getPrice())));
+      importDetails.setTotal(Double.parseDouble(decimalFormat.format(importDetailsRequest.getTotal())));
       importDetails.setCreatedBy(saveImportMaster.getCreatedBy());
       importDetailsList.add(importDetails);
       importDetailsResponseList.add(ImportDetailsResponse.from(importDetails));

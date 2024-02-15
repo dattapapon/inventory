@@ -36,19 +36,23 @@ public interface CommonService {
 
   GetAllCustomer getCustomer();
 
-  AllBranchResponse getBranch(String supplier);
+  AllBranchResponse getAllBranch(String supplier);
 
   SalesPersonResponse addSalesPerson(SalesPersonRequest salesPersonRequest);
 
   AllSalesPersonResponse getSalesPerson();
 
-  WastageResponse addWastage(WastageAddRequest wastageAddRequest);
+  WastageAddResponse addWastage(WastageMasterRequest wastageDetailsRequest);
 
-  ReturnResponse addReturn(ReturnRequest request);
+  ReturnAddResponse addReturn(ReturnMasterRequest request);
 
   AllProductRevenueResponse calculateRevenue();
 
   FinalResponse getAllProductAndArticleAndSale();
 
-  AllWastageResponse getAllWastage();
+  SuccessWastageResponseUsingSerial getAllWastage();
+
+  SuccessReturnResponseUsingSerial getAllReturn();
+
+  SuccessRequisitionResponseUsingSerial getAllRequisition();
 }

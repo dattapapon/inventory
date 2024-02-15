@@ -5,6 +5,7 @@ import com.flagship.constant.db.DbConstant.DbProduct;
 import com.flagship.constant.db.DbConstant.DbUser;
 import com.flagship.constant.db.DbConstant.DbWastage;
 import com.flagship.constant.enums.Cause;
+import com.flagship.constant.enums.Warehouse;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -44,6 +45,13 @@ public class Wastage {
   @Column(name = DbWastage.CAUSE, nullable = false)
   @Enumerated(value = EnumType.STRING)
   private Cause cause;
+
+  @Column(name = DbWastage.WAREHOUSE, nullable = false)
+  @Enumerated(value = EnumType.STRING)
+  private Warehouse warehouse;
+
+  @Column(name = DbWastage.SERIAL_NO, nullable = false)
+  private Long serialNo;
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = DbWastage.CREATED_BY, referencedColumnName = DbUser.EMAIL, nullable = false, updatable = false)

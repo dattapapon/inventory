@@ -1,9 +1,6 @@
 package com.flagship.service;
 
-import com.flagship.dto.request.EditOrderRequest;
-import com.flagship.dto.request.OrderMasterRequest;
-import com.flagship.dto.request.PaymentRequest;
-import com.flagship.dto.request.UpdateOrderRequest;
+import com.flagship.dto.request.*;
 import com.flagship.dto.response.*;
 
 import java.util.List;
@@ -11,7 +8,7 @@ import java.util.List;
 public interface OrderService {
   OrderResponse createOrder(OrderMasterRequest orderMasterRequest);
 
-  ChallanResponse getCustomerChallan(String customer);
+  ChallanResponse getLastInvoice();
 
   UomAndAvailableResponse getUomAndAvailable(String product, String shipment);
 
@@ -31,7 +28,7 @@ public interface OrderService {
 
   EditOrderResponse editOrder(Long order, List<EditOrderRequest> updateOrderRequest);
 
-  ReturnDetailsResponse getReturn(Long orderId);
+  ReturnDetailsResponse getReturn(Long serial);
 
   AllPendingOrdersResponse getPendingOrder();
 
@@ -45,5 +42,13 @@ public interface OrderService {
 
   AllOrderIdResponse getAllOrderId(String product);
 
-  GetUomResponse getProductUom(String product, Long order);
+  GetUomResponse getProductUom(String product, Long order, String warehouse);
+
+  AllPendingOrdersResponse getWaitingOrder();
+
+  OrderRequisitionResponse updateOrderWaitingStatus(UpdateOrder updateOrder);
+
+  OrderRequisitionResponse getRequisition(Long serial);
+
+  OrderWarehouseResponse getAllWarehouse(String product, Long order);
 }

@@ -10,11 +10,13 @@ import java.util.List;
 @Builder
 public class AllProductRevenueResponse {
   private Integer code;
+  private Double total;
   private List<SingleProductRevenueResponse> revenueResponses;
 
-  public static AllProductRevenueResponse from(List<SingleProductRevenueResponse> revenueResponses) {
+  public static AllProductRevenueResponse from(List<SingleProductRevenueResponse> revenueResponses, Double total) {
     return AllProductRevenueResponse.builder()
             .code(HttpStatus.SC_OK)
+            .total(total)
             .revenueResponses(revenueResponses)
             .build();
   }

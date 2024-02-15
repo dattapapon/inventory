@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum OrderStatus {
   PENDING(1),
   DELIVERED(2),
+  WAITING(3),
   ;
 
   private final int type;
@@ -23,6 +24,8 @@ public enum OrderStatus {
         return PENDING;
       case 2:
         return DELIVERED;
+      case 3:
+        return WAITING;
       default:
         return null;
     }
@@ -35,6 +38,8 @@ public enum OrderStatus {
         return PENDING;
       case "DELIVERED":
         return DELIVERED;
+      case "WAITING":
+        return WAITING;
       default:
         return null;
     }

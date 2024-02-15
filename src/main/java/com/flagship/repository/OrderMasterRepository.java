@@ -13,7 +13,6 @@ import java.util.Optional;
 public interface OrderMasterRepository extends PagingAndSortingRepository<OrderMaster, Long> {
   List<OrderMaster> findAllByCreatedOnBetween(ZonedDateTime start, ZonedDateTime end);
 
-  Optional<OrderMaster> findFirstByCustomerOrderByCreatedOnDesc(Customer customer);
 
   Optional<OrderMaster> findFirstByOrderByOrderIdDesc();
 

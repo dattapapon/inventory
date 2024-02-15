@@ -1,6 +1,7 @@
 package com.flagship.dto.response;
 
 import com.flagship.constant.enums.UOM;
+import com.flagship.constant.enums.Warehouse;
 import com.flagship.model.db.OrderDetails;
 import com.flagship.model.db.OrderMaster;
 import lombok.Builder;
@@ -19,6 +20,7 @@ public class PendingOrderResponse {
   private Double quantity;
   private Double unitPrice;
   private Double totalBill;
+  private Warehouse warehouse;
 
   public static PendingOrderResponse from(OrderMaster orderMaster, OrderDetails orderDetails) {
     return PendingOrderResponse.builder()
@@ -32,6 +34,7 @@ public class PendingOrderResponse {
             .quantity(orderDetails.getQuantity())
             .unitPrice(orderDetails.getPrice())
             .totalBill(orderDetails.getTotalPrice())
+            .warehouse(orderDetails.getWarehouse())
             .build();
   }
 }

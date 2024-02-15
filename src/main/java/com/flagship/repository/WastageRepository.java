@@ -7,10 +7,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface WastageRepository extends PagingAndSortingRepository<Wastage, Long> {
   List<Wastage> findByCreatedOnBetweenOrderByCreatedOnAsc(ZonedDateTime start, ZonedDateTime end);
 
-  List<Wastage> findByShipment(ImportMaster importMaster);
+  Optional<Wastage> findFirstByOrderBySerialNoDesc();
+
+  List<Wastage> findBySerialNo(Long serial);
 }

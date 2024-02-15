@@ -20,6 +20,9 @@ public class SingleBillResponse {
   private Integer challan;
   private Double sales;
   private Double due;
+  private String branch;
+  private String billTo;
+  private String salesPerson;
 
   public static SingleBillResponse from(OrderMaster orderMaster, Double sales, Double due) {
     SingleBillResponse.SingleBillResponseBuilder builder = SingleBillResponse.builder()
@@ -33,11 +36,19 @@ public class SingleBillResponse {
             .bin(orderMaster.getCustomer().getBinNo())
             .challan(orderMaster.getChallan())
             .sales(sales)
-            .due(due);
+            .due(due)
+            .salesPerson(orderMaster.getOrderBy().getSalesPersonName());
     if (orderMaster.getSupplier() != null) {
-      builder.supplier(orderMaster.getSupplier().getSupplierId());
+      builder.supplier(orderMaster.getSupplier().getSupplierId()); 
     } else {
       builder.supplier(null);
+    }
+    if (orderMaster.getBranch() != null) {
+      builder.branch(orderMaster.getBranch().getBranchName());
+      builder.billTo(orderMaster.getCustomer().getCompany() + "/" + orderMaster.getBranch().getBranchName());
+    } else {
+      builder.branch(null);
+      builder.billTo(orderMaster.getCustomer().getCompany() + "/" + null);
     }
     return builder.build();
   }

@@ -9,8 +9,6 @@ import org.apache.hc.core5.http.HttpStatus;
 @Data
 @Builder
 public class WastageResponse {
-  private Integer code;
-  private String message;
   private String product;
   private String shipment;
   private Double cartoon;
@@ -19,10 +17,8 @@ public class WastageResponse {
   private Cause cause;
   private String user;
 
-  public static WastageResponse from(String message, Wastage wastage) {
+  public static WastageResponse from(Wastage wastage) {
     return WastageResponse.builder()
-            .code(HttpStatus.SC_OK)
-            .message(message)
             .product(wastage.getProduct().getProductName())
             .shipment(wastage.getShipment().getShipmentNo())
             .cartoon(wastage.getCartoon())

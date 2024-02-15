@@ -3,6 +3,7 @@ package com.flagship.service.impl;
 import com.flagship.constant.enums.Cause;
 import com.flagship.constant.enums.CustomerType;
 import com.flagship.constant.enums.UOM;
+import com.flagship.constant.enums.Warehouse;
 import com.flagship.dto.request.*;
 import com.flagship.dto.response.*;
 import com.flagship.exception.RequestValidationException;
@@ -13,9 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class CommonServiceImpl implements CommonService {
@@ -36,6 +36,7 @@ public class CommonServiceImpl implements CommonService {
   private final ReturnsRepository returnsRepository;
   private final ImportDetailsRepository importDetailsRepository;
   private final OrderDetailsRepository orderDetailsRepository;
+  private final RequisitionRepository requisitionRepository;
 
   @Autowired
   public CommonServiceImpl(BrandRepository brandRepository, CountryRepository countryRepository,
@@ -46,7 +47,7 @@ public class CommonServiceImpl implements CommonService {
                            SalesPersonRepository salesPersonRepository, WastageRepository wastageRepository,
                            ImportMasterRepository importMasterRepository, OrderMasterRepository orderMasterRepository,
                            ReturnsRepository returnsRepository, ImportDetailsRepository importDetailsRepository,
-                           OrderDetailsRepository orderDetailsRepository) {
+                           OrderDetailsRepository orderDetailsRepository, RequisitionRepository requisitionRepository) {
     this.brandRepository = brandRepository;
     this.countryRepository = countryRepository;
     this.categoriesRepository = categoriesRepository;
@@ -64,6 +65,7 @@ public class CommonServiceImpl implements CommonService {
     this.returnsRepository = returnsRepository;
     this.importDetailsRepository = importDetailsRepository;
     this.orderDetailsRepository = orderDetailsRepository;
+    this.requisitionRepository = requisitionRepository;
   }
 
   @Override
@@ -353,7 +355,7 @@ public class CommonServiceImpl implements CommonService {
   }
 
   @Override
-  public AllBranchResponse getBranch(String supplier) {
+  public AllBranchResponse getAllBranch(String supplier) {
     List<Branch> branchList = branchRepository.findBySupplier(getSupplier(supplier));
     List<SingleBranchResponse> singleBranchResponses = new ArrayList<>();
     for (Branch branch : branchList) {
@@ -399,206 +401,323 @@ public class CommonServiceImpl implements CommonService {
   }
 
   @Override
-  public WastageResponse addWastage(WastageAddRequest request) {
-    Wastage wastage = new Wastage();
+  public WastageAddResponse addWastage(WastageMasterRequest request) {
+    request.validate();
+    List<WastageDetailsRequest> wastageDetailsRequests = request.getWastageDetailsRequestList();
+    for (WastageDetailsRequest wastageDetailsRequest : wastageDetailsRequests) {
+      wastageDetailsRequest.validate();
+    }
+    Warehouse warehouse = request.getWarehouse();
     Optional<User> user = userRepository.findByEmail(request.getUser());
     if (user.isEmpty()) {
       throw new RequestValidationException("User not exist");
     }
-    Optional<ImportDetails> optionalImportDetails = importDetailsRepository.findByProductAndImportMaster(
-            getProduct(request.getProduct().getValue()), getShipment(request.getShipment().getValue()));
-    if (optionalImportDetails.isPresent()) {
-      wastage.setProduct(optionalImportDetails.get().getProduct());
-      wastage.setShipment(optionalImportDetails.get().getImportMaster());
-      if (request.getUom().equals(UOM.LT)) {
-        wastage.setCartoon(request.getQuantity() / optionalImportDetails.get().getUnitCartoon());
-        wastage.setPiece(request.getQuantity() / optionalImportDetails.get().getUnitPiece());
-        wastage.setKgLt(request.getQuantity());
+    List<WastageResponse> wastageResponses = new ArrayList<>();
+    Long serialNo = getSerialNo();
+    for (WastageDetailsRequest wastageDetailsRequest : wastageDetailsRequests) {
+      Warehouse warehouse1 = Warehouse.fromName(wastageDetailsRequest.getWastageFrom().getValue());
+      Optional<ImportDetails> optionalImportDetails = importDetailsRepository.findByProductAndImportMasterAndWarehouse(
+              getProduct(wastageDetailsRequest.getProduct().getValue()),
+              getShipment(wastageDetailsRequest.getShipment().getValue()), Warehouse.valueOf(
+                      wastageDetailsRequest.getWastageFrom().getValue()));
+      if (optionalImportDetails.isPresent()) {
+        Wastage wastage = new Wastage();
+        wastage.setProduct(optionalImportDetails.get().getProduct());
+        wastage.setShipment(optionalImportDetails.get().getImportMaster());
+        if (wastageDetailsRequest.getUom().equals(UOM.LT)) {
+          wastage.setCartoon(wastageDetailsRequest.getQuantity() / optionalImportDetails.get().getUnitCartoon());
+          wastage.setPiece(wastageDetailsRequest.getQuantity() / optionalImportDetails.get().getUnitPiece());
+          wastage.setKgLt(wastageDetailsRequest.getQuantity());
+        }
+        if (wastageDetailsRequest.getUom().equals(UOM.KG)) {
+          wastage.setCartoon(wastageDetailsRequest.getQuantity() / optionalImportDetails.get().getUnitCartoon());
+          wastage.setPiece(wastageDetailsRequest.getQuantity() / optionalImportDetails.get().getUnitPiece());
+          wastage.setKgLt(wastageDetailsRequest.getQuantity());
+        }
+        if (wastageDetailsRequest.getUom().equals(UOM.PIECE)) {
+          wastage.setCartoon(wastageDetailsRequest.getQuantity());
+          wastage.setPiece((wastageDetailsRequest.getQuantity() * optionalImportDetails.get().getUnitPiece())
+                  / optionalImportDetails.get().getUnitPiece());
+          wastage.setKgLt(wastageDetailsRequest.getQuantity() * optionalImportDetails.get().getUnitPiece());
+        }
+        if (wastageDetailsRequest.getUom().equals(UOM.CARTOON)) {
+          wastage.setCartoon((wastageDetailsRequest.getQuantity() * optionalImportDetails.get().getUnitPiece())
+                  / optionalImportDetails.get().getUnitCartoon());
+          wastage.setPiece(wastageDetailsRequest.getQuantity());
+          wastage.setKgLt(wastageDetailsRequest.getQuantity() * optionalImportDetails.get().getUnitPiece());
+        }
+        wastage.setCreatedBy(user.get());
+        wastage.setCause(Cause.fromName(wastageDetailsRequest.getCause().toString()));
+        wastage.setWarehouse(warehouse);
+        wastage.setSerialNo(serialNo);
+        wastageRepository.save(wastage);
+        updateStock(wastage, wastageDetailsRequest);
+        wastageResponses.add(WastageResponse.from(wastage));
+      } else {
+        throw new RequestValidationException("Import not found.");
       }
-      if (request.getUom().equals(UOM.KG)) {
-        wastage.setCartoon(request.getQuantity() / optionalImportDetails.get().getUnitCartoon());
-        wastage.setPiece(request.getQuantity() / optionalImportDetails.get().getUnitPiece());
-        wastage.setKgLt(request.getQuantity());
-      }
-      if (request.getUom().equals(UOM.PIECE)) {
-        wastage.setCartoon(request.getQuantity());
-        wastage.setPiece((request.getQuantity() * optionalImportDetails.get().getUnitPiece())
-                / optionalImportDetails.get().getUnitPiece());
-        wastage.setKgLt(request.getQuantity() * optionalImportDetails.get().getUnitPiece());
-      }
-      if (request.getUom().equals(UOM.CARTOON)) {
-        wastage.setCartoon((request.getQuantity() * optionalImportDetails.get().getUnitPiece())
-                / optionalImportDetails.get().getUnitCartoon());
-        wastage.setPiece(request.getQuantity());
-        wastage.setKgLt(request.getQuantity() * optionalImportDetails.get().getUnitPiece());
-      }
-      wastage.setCreatedBy(user.get());
-      wastage.setCause(Cause.fromName(request.getCause().toString()));
-      wastageRepository.save(wastage);
-      updateStock(wastage);
-      return WastageResponse.from("Wastage added successfully", wastage);
-    }else {
-      throw new RequestValidationException("Import not found.");
     }
+    return WastageAddResponse.from("Wastage added successfully", warehouse, user.get().getName(), wastageResponses);
   }
 
-private void updateStock(Wastage wastage) {
-  Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(wastage.getProduct(),
-          wastage.getShipment());
-  if (importDetails.isPresent()) {
-    importDetails.get().setCartoon(importDetails.get().getCartoon() - wastage.getCartoon());
-    importDetails.get().setPiece(importDetails.get().getPiece() - wastage.getPiece());
-    importDetails.get().setKgLt(importDetails.get().getKgLt() - wastage.getKgLt());
-    if (importDetails.get().getUom().equals(UOM.KG)) {
-      updateStockData(wastage.getProduct(), wastage.getKgLt());
-    } else if (importDetails.get().getUom().equals(UOM.LT)) {
-      updateStockData(wastage.getProduct(), wastage.getKgLt());
-    } else if (importDetails.get().getUom().equals(UOM.PIECE)) {
-      updateStockData(wastage.getProduct(), wastage.getPiece());
+  private Long getSerialNo() {
+    Optional<Wastage> optionalWastage = wastageRepository.findFirstByOrderBySerialNoDesc();
+    Date currentDate = new Date();
+    SimpleDateFormat yearFormat = new SimpleDateFormat("yy");
+    String currentYear = yearFormat.format(currentDate);
+    if (optionalWastage.isPresent()) {
+      String serialId = String.valueOf(optionalWastage.get().getSerialNo()).substring(0, 2);
+      if (!serialId.equals(currentYear)) {
+        return Long.parseLong(currentYear + "000001");
+      } else {
+        return optionalWastage.get().getSerialNo() + 1;
+      }
     } else {
-      updateStockData(wastage.getProduct(), wastage.getCartoon());
+      return Long.parseLong(currentYear + "000001");
     }
-    importDetailsRepository.save(importDetails.get());
   }
-}
 
-private void updateStockData(Product product, Double quantity) {
-  Optional<Stock> optionalStock = stockRepository.findByProduct(product);
-  if (optionalStock.isPresent()) {
-    optionalStock.get().setTotalBuy(optionalStock.get().getTotalBuy());
-    optionalStock.get().setInStock(optionalStock.get().getInStock() - quantity);
-    stockRepository.save(optionalStock.get());
-  }
-}
-
-@Override
-public ReturnResponse addReturn(ReturnRequest request) {
-  Returns returns = new Returns();
-  Optional<User> user = userRepository.findByEmail(request.getUser());
-  if (user.isEmpty()) {
-    throw new RequestValidationException("User not exist");
-  }
-  Optional<OrderDetails> optionalOrderDetails = orderDetailsRepository.findByOrderAndProduct(
-          getOrderId(Long.valueOf(request.getOrder().getValue())), getProduct(request.getProduct().getValue()));
-  if (optionalOrderDetails.isPresent()) {
-    returns.setProduct(getProduct(request.getProduct().getValue()));
-    returns.setOrder(getOrderId(Long.valueOf(request.getOrder().getValue())));
-    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMaster(
-            optionalOrderDetails.get().getProduct(), optionalOrderDetails.get().getShipment());
+  private void updateStock(Wastage wastage, WastageDetailsRequest wastageDetailsRequest) {
+    Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMasterAndWarehouse(wastage.getProduct(),
+            wastage.getShipment(), Warehouse.valueOf(wastageDetailsRequest.getWastageFrom().getValue()));
     if (importDetails.isPresent()) {
-      if (request.getUom().equals(UOM.LT)) {
-        returns.setCartoon(request.getQuantity() / importDetails.get().getUnitCartoon());
-        returns.setPiece(request.getQuantity() / importDetails.get().getUnitPiece());
-        returns.setKgLt(request.getQuantity());
+      importDetails.get().setCartoon(importDetails.get().getCartoon() - wastage.getCartoon());
+      importDetails.get().setPiece(importDetails.get().getPiece() - wastage.getPiece());
+      importDetails.get().setKgLt(importDetails.get().getKgLt() - wastage.getKgLt());
+      if (importDetails.get().getUom().equals(UOM.KG)) {
+        updateStockData(wastage.getProduct(), wastage.getKgLt());
+      } else if (importDetails.get().getUom().equals(UOM.LT)) {
+        updateStockData(wastage.getProduct(), wastage.getKgLt());
+      } else if (importDetails.get().getUom().equals(UOM.PIECE)) {
+        updateStockData(wastage.getProduct(), wastage.getPiece());
+      } else {
+        updateStockData(wastage.getProduct(), wastage.getCartoon());
       }
-      if (request.getUom().equals(UOM.KG)) {
-        returns.setCartoon(request.getQuantity() / importDetails.get().getUnitCartoon());
-        returns.setPiece(request.getQuantity() / importDetails.get().getUnitPiece());
-        returns.setKgLt(request.getQuantity());
-      }
-      if (request.getUom().equals(UOM.PIECE)) {
-        returns.setCartoon(request.getQuantity());
-        returns.setPiece((request.getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitPiece());
-        returns.setKgLt(request.getQuantity() * importDetails.get().getUnitPiece());
-      }
-      if (request.getUom().equals(UOM.CARTOON)) {
-        returns.setCartoon((request.getQuantity() * importDetails.get().getUnitPiece()) / importDetails.get().getUnitCartoon());
-        returns.setPiece(request.getQuantity());
-        returns.setKgLt(request.getQuantity() * importDetails.get().getUnitPiece());
-      }
-      returns.setCreatedBy(user.get());
-      returns.setDeliveryMan(request.getDeliveryMan());
-      returns.setCause(Cause.fromName(request.getCause().toString()));
-      returnsRepository.save(returns);
-      return ReturnResponse.from("Returns added successfully", returns);
-    } else {
-      throw new RequestValidationException("Product not found");
+      importDetailsRepository.save(importDetails.get());
     }
-  } else {
-    throw new RequestValidationException("Order not found");
   }
-}
 
-@Override
-public AllProductRevenueResponse calculateRevenue() {
-  DecimalFormat decimalFormat = new DecimalFormat("#.###");
-  List<Product> products = (List<Product>) productRepository.findAll();
-  List<SingleProductRevenueResponse> singleProductRevenueResponses = new ArrayList<>();
-  for (Product product : products) {
-    Double totalBuy = 0.0;
-    Double totalSell = 0.0;
-    Double inStock = 0.0;
-    double averageBuyingPrice;
-    double averageSellingPrice;
-    Double totalBuyingPrice = 0.0;
-    Double totalSellingPrice = 0.0;
-    double revenue;
-    List<ImportDetails> importDetailsList = importDetailsRepository.findByProduct(product);
-    List<OrderDetails> orderDetailsList = orderDetailsRepository.findByProduct(product);
+  private void updateStockData(Product product, Double quantity) {
     Optional<Stock> optionalStock = stockRepository.findByProduct(product);
     if (optionalStock.isPresent()) {
-      totalBuy = optionalStock.get().getTotalBuy();
-      totalSell = optionalStock.get().getTotalSell();
-      inStock = optionalStock.get().getInStock();
+      optionalStock.get().setTotalBuy(optionalStock.get().getTotalBuy());
+      optionalStock.get().setInStock(optionalStock.get().getInStock() - quantity);
+      stockRepository.save(optionalStock.get());
     }
-    for (ImportDetails importDetails : importDetailsList) {
-      totalBuyingPrice = totalBuyingPrice + importDetails.getTotal();
-    }
-    for (OrderDetails orderDetails : orderDetailsList) {
-      totalSellingPrice = totalSellingPrice + orderDetails.getTotalPrice();
-    }
-    averageBuyingPrice = totalBuy > 0 ? Double.parseDouble(decimalFormat.format(totalBuyingPrice / totalBuy)) : 0.0;
-    averageSellingPrice = totalSell > 0 ? Double.parseDouble(decimalFormat.format(totalSellingPrice / totalSell)) : 0.0;
-    revenue = Double.parseDouble(decimalFormat.format(totalSellingPrice - totalBuyingPrice));
-    singleProductRevenueResponses.add(SingleProductRevenueResponse.from(product.getProductName(), totalBuy, totalSell,
-            inStock, averageBuyingPrice, averageSellingPrice, totalBuyingPrice, totalSellingPrice, revenue));
   }
-  return AllProductRevenueResponse.from(singleProductRevenueResponses);
-}
-
-@Override
-public FinalResponse getAllProductAndArticleAndSale() {
-  List<Product> products = (List<Product>) productRepository.findAll();
-  List<AllProductAndArticleAndSaleResponse> allProductAndArticleAndSaleResponses = new ArrayList<>();
-  int serialNo = 0;
-  for (Product product : products) {
-    serialNo += 1;
-    List<Sale> sales = saleRepository.findByProduct(product);
-    List<CompanyResponse> companyResponses = new ArrayList<>();
-    for (Sale sale : sales) {
-      companyResponses.add(CompanyResponse.from(sale));
-    }
-    allProductAndArticleAndSaleResponses.add(AllProductAndArticleAndSaleResponse.from(serialNo, product.getProductId(),
-            product.getProductName(), companyResponses));
-  }
-  return FinalResponse.from(allProductAndArticleAndSaleResponses);
-}
 
   @Override
-  public AllWastageResponse getAllWastage() {
-    List<Wastage> wastageList = (List<Wastage>) wastageRepository.findAll();
-    List<SingleWastageResponse> singleWastageResponses = new ArrayList<>();
-    for(Wastage wastage : wastageList){
-      singleWastageResponses.add(SingleWastageResponse.from(wastage));
+  public ReturnAddResponse addReturn(ReturnMasterRequest request) {
+    request.validate();
+    List<ReturnDetailsRequest> returnDetailsRequestList = request.getReturnDetailsRequestList();
+    for (ReturnDetailsRequest detailsRequest : returnDetailsRequestList) {
+      detailsRequest.validate();
     }
-    return AllWastageResponse.from(singleWastageResponses);
+    Returns returns = new Returns();
+    Optional<User> user = userRepository.findByEmail(request.getUser());
+    if (user.isEmpty()) {
+      throw new RequestValidationException("User not exist");
+    }
+    Customer customer = getCustomerById(request.getCustomer().getValue());
+    Branch branch = getBranch(request.getBranch().getValue(), customer.getSupplier().getSupplierId());
+    Long serialNo = getRequestSerialNo();
+    List<ReturnResponse> returnResponses = new ArrayList<>();
+    for (ReturnDetailsRequest detailsRequest : returnDetailsRequestList) {
+      Optional<OrderDetails> optionalOrderDetails = orderDetailsRepository.findByOrderAndProductAndWarehouse(
+              getOrderId(Long.valueOf(detailsRequest.getOrder().getValue())),
+              getProduct(detailsRequest.getProduct().getValue()), Warehouse.valueOf(detailsRequest.getReturnTo().getValue()));
+      if (optionalOrderDetails.isPresent()) {
+        returns.setProduct(getProduct(detailsRequest.getProduct().getValue()));
+        returns.setOrder(getOrderId(Long.valueOf(detailsRequest.getOrder().getValue())));
+        Optional<ImportDetails> importDetails = importDetailsRepository.findByProductAndImportMasterAndWarehouse(
+                optionalOrderDetails.get().getProduct(), optionalOrderDetails.get().getShipment(),
+                optionalOrderDetails.get().getWarehouse());
+        if (importDetails.isPresent()) {
+          if (detailsRequest.getUom().equals(UOM.LT)) {
+            returns.setCartoon(detailsRequest.getQuantity() / importDetails.get().getUnitCartoon());
+            returns.setPiece(detailsRequest.getQuantity() / importDetails.get().getUnitPiece());
+            returns.setKgLt(detailsRequest.getQuantity());
+          }
+          if (detailsRequest.getUom().equals(UOM.KG)) {
+            returns.setCartoon(detailsRequest.getQuantity() / importDetails.get().getUnitCartoon());
+            returns.setPiece(detailsRequest.getQuantity() / importDetails.get().getUnitPiece());
+            returns.setKgLt(detailsRequest.getQuantity());
+          }
+          if (detailsRequest.getUom().equals(UOM.PIECE)) {
+            returns.setCartoon(detailsRequest.getQuantity());
+            returns.setPiece((detailsRequest.getQuantity() * importDetails.get().getUnitPiece())
+                    / importDetails.get().getUnitPiece());
+            returns.setKgLt(detailsRequest.getQuantity() * importDetails.get().getUnitPiece());
+          }
+          if (detailsRequest.getUom().equals(UOM.CARTOON)) {
+            returns.setCartoon((detailsRequest.getQuantity() * importDetails.get().getUnitPiece())
+                    / importDetails.get().getUnitCartoon());
+            returns.setPiece(detailsRequest.getQuantity());
+            returns.setKgLt(detailsRequest.getQuantity() * importDetails.get().getUnitPiece());
+          }
+          returns.setCreatedBy(user.get());
+          returns.setDeliveryMan(request.getDelivery());
+          returns.setCause(Cause.fromName(detailsRequest.getCause().toString()));
+          returns.setSerialNo(serialNo);
+          returns.setDeliveryMan(request.getDelivery());
+          returns.setWarehouse(request.getWarehouse());
+          returns.setCustomer(customer);
+          returns.setBranch(branch);
+          returnsRepository.save(returns);
+          returnResponses.add(ReturnResponse.from(returns));
+        } else {
+          throw new RequestValidationException("Product not found");
+        }
+      } else {
+        throw new RequestValidationException("Order not found");
+      }
+    }
+    return ReturnAddResponse.from("Returns add successfully", request.getWarehouse(), request.getDelivery()
+            , customer.getCustomerName(), branch.getBranchName(), returnResponses);
+  }
+
+  private Customer getCustomerById(String customerId) {
+    Optional<Customer> optionalCustomer = customerRepository.findByCustomerId(customerId);
+    if(optionalCustomer.isPresent()){
+      return optionalCustomer.get();
+    }else{
+      throw new RequestValidationException("Customer not found for this id: " + customerId);
+    }
+  }
+
+  private Long getRequestSerialNo() {
+    Optional<Returns> optionalReturns = returnsRepository.findFirstByOrderBySerialNoDesc();
+    Date currentDate = new Date();
+    SimpleDateFormat yearFormat = new SimpleDateFormat("yy");
+    String currentYear = yearFormat.format(currentDate);
+    if (optionalReturns.isPresent()) {
+      String serialId = String.valueOf(optionalReturns.get().getSerialNo()).substring(0, 2);
+      if (!serialId.equals(currentYear)) {
+        return Long.parseLong(currentYear + "000001");
+      } else {
+        return optionalReturns.get().getSerialNo() + 1;
+      }
+    } else {
+      return Long.parseLong(currentYear + "000001");
+    }
+  }
+
+  @Override
+  public AllProductRevenueResponse calculateRevenue() {
+    DecimalFormat decimalFormat = new DecimalFormat("#.###");
+    double total = 0.0;
+    List<Product> products = (List<Product>) productRepository.findAll();
+    List<SingleProductRevenueResponse> singleProductRevenueResponses = new ArrayList<>();
+    for (Product product : products) {
+      Double totalBuy;
+      Double totalSell;
+      double inStock;
+      double averageBuyingPrice;
+      double averageSellingPrice;
+      Double totalBuyingPrice = 0.0;
+      Double totalSellingPrice = 0.0;
+      double revenue;
+      List<ImportDetails> importDetailsList = importDetailsRepository.findByProduct(product);
+      List<OrderDetails> orderDetailsList = orderDetailsRepository.findByProduct(product);
+      Optional<Stock> optionalStock = stockRepository.findByProduct(product);
+      if (optionalStock.isPresent() && optionalStock.get().getInStock() > 0.0) {
+        totalBuy = optionalStock.get().getTotalBuy();
+        totalSell = optionalStock.get().getTotalSell();
+        for (ImportDetails importDetails : importDetailsList) {
+          totalBuyingPrice = totalBuyingPrice + importDetails.getTotal();
+        }
+        for (OrderDetails orderDetails : orderDetailsList) {
+          totalSellingPrice = totalSellingPrice + orderDetails.getTotalPrice();
+        }
+        averageBuyingPrice = totalBuy > 0 ? Double.parseDouble(decimalFormat.format(
+                totalBuyingPrice / totalBuy)) : 0.0;
+        averageSellingPrice = totalSell > 0 ? Double.parseDouble(decimalFormat.format(
+                totalSellingPrice / totalSell)) : 0.0;
+        revenue = Double.parseDouble(decimalFormat.format(averageBuyingPrice * optionalStock.get().getInStock()));
+        total = total + revenue;
+        singleProductRevenueResponses.add(SingleProductRevenueResponse.from(
+                optionalStock.get().getProduct().getProductName(), totalBuy, totalSell, optionalStock.get().getInStock(),
+                averageBuyingPrice, averageSellingPrice, totalBuyingPrice, totalSellingPrice, revenue));
+      }
+    }
+    return AllProductRevenueResponse.from(singleProductRevenueResponses, total);
+  }
+
+  @Override
+  public FinalResponse getAllProductAndArticleAndSale() {
+    List<Product> products = (List<Product>) productRepository.findAll();
+    List<AllProductAndArticleAndSaleResponse> allProductAndArticleAndSaleResponses = new ArrayList<>();
+    int serialNo = 0;
+    for (Product product : products) {
+      serialNo += 1;
+      List<Sale> sales = saleRepository.findByProduct(product);
+      List<CompanyResponse> companyResponses = new ArrayList<>();
+      for (Sale sale : sales) {
+        companyResponses.add(CompanyResponse.from(sale));
+      }
+      allProductAndArticleAndSaleResponses.add(AllProductAndArticleAndSaleResponse.from(serialNo, product.getProductId(),
+              product.getProductName(), companyResponses));
+    }
+    return FinalResponse.from(allProductAndArticleAndSaleResponses);
+  }
+
+  @Override
+  public SuccessWastageResponseUsingSerial getAllWastage() {
+    List<Wastage> wastageList = (List<Wastage>) wastageRepository.findAll();
+    List<WastageResponseUsingSerial> wastageResponseUsingSerials = new ArrayList<>();
+    HashMap<Long, Integer> commonIds = new HashMap<>();
+    for (Wastage wastage : wastageList) {
+      if(commonIds.isEmpty() || !commonIds.containsKey(wastage.getSerialNo())) {
+        commonIds.put(wastage.getSerialNo(), 1);
+        wastageResponseUsingSerials.add(WastageResponseUsingSerial.from(wastage));
+      }
+    }
+    return SuccessWastageResponseUsingSerial.from(wastageResponseUsingSerials);
+  }
+
+  @Override
+  public SuccessReturnResponseUsingSerial getAllReturn() {
+    List<Returns> returnsList = (List<Returns>) returnsRepository.findAll();
+    List<ReturnResponseUsingSerial> returnResponseUsingSerials = new ArrayList<>();
+    HashMap<Long, Integer> commonIds = new HashMap<>();
+    for (Returns returns : returnsList) {
+      if(commonIds.isEmpty() || !commonIds.containsKey(returns.getSerialNo())) {
+        commonIds.put(returns.getSerialNo(), 1);
+        returnResponseUsingSerials.add(ReturnResponseUsingSerial.from(returns));
+      }
+    }
+    return SuccessReturnResponseUsingSerial.from(returnResponseUsingSerials);
+  }
+
+  @Override
+  public SuccessRequisitionResponseUsingSerial getAllRequisition() {
+    List<Requisition> requisitionList = (List<Requisition>) requisitionRepository.findAll();
+    List<RequisitionResponseUsingSerial> requisitionResponseUsingSerials = new ArrayList<>();
+    HashMap<Long, Integer> commonIds = new HashMap<>();
+    for (Requisition requisition : requisitionList) {
+      if(commonIds.isEmpty() || !commonIds.containsKey(requisition.getSerialNo())) {
+        commonIds.put(requisition.getSerialNo(), 1);
+        requisitionResponseUsingSerials.add(RequisitionResponseUsingSerial.from(requisition));
+      }
+    }
+    return SuccessRequisitionResponseUsingSerial.from(requisitionResponseUsingSerials);
   }
 
   private OrderMaster getOrderId(Long order) {
-  Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(order);
-  if (optionalOrderMaster.isPresent()) {
-    return optionalOrderMaster.get();
-  } else {
-    throw new RequestValidationException("Order not exist");
+    Optional<OrderMaster> optionalOrderMaster = orderMasterRepository.findByOrderId(order);
+    if (optionalOrderMaster.isPresent()) {
+      return optionalOrderMaster.get();
+    } else {
+      throw new RequestValidationException("Order not exist");
+    }
   }
-}
 
-private ImportMaster getShipment(String shipment) {
-  Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
-  if (optionalImportMaster.isPresent()) {
-    return optionalImportMaster.get();
-  } else {
-    throw new RequestValidationException("Shipment not exist");
+  private ImportMaster getShipment(String shipment) {
+    Optional<ImportMaster> optionalImportMaster = importMasterRepository.findByShipmentNo(shipment);
+    if (optionalImportMaster.isPresent()) {
+      return optionalImportMaster.get();
+    } else {
+      throw new RequestValidationException("Shipment not exist");
+    }
   }
-}
 }
